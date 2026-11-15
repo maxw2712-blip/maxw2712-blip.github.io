@@ -15,9 +15,11 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
   click(doc.querySelector('.seg[data-key="mode"] button[data-v="ancient"]')); await sleep(10);
   // Planets is archived: its tab exists only in a build made with --planets (PINPOINT_HTML=... to test that build)
   console.log('planets tab present =', !!$('tabPlanets'));
-  for(const tab of ['tabGeo','tabFlags','tabPlanets','tabHist']){
-    if(!$(tab)) continue;
-    click($(tab)); await sleep(15);
+  for(const tab of ['tabGeo','tabFlags','tabPlanets','hist']){
+    if(tab==='hist'){ click($('tabSecurity')); click(doc.querySelector('.seg[data-key="secTopic"] button[data-v="hist"]')); }
+    else if(!$(tab)) continue;
+    else click($(tab));
+    await sleep(15);
     for(const lv of [0,3]){
       click(doc.querySelector(`#ticks button[data-i="${lv}"]`)); click($('start')); await sleep(15);
       const first=$('kind').textContent+' '+($('qname').textContent||'['+(!$('flagImg').hidden?'flag':'')+$('tQuestion').textContent.slice(0,30)+']');

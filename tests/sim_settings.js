@@ -37,7 +37,7 @@ const round=()=>$('round').textContent;
   // trivia
   $('setup').hidden=false;
   click($('settingsBtn')); $('optAuto').checked=true; $('optAuto').dispatchEvent(new w.Event('change',{bubbles:true})); click(doc.querySelector('#optDelay .optBtn[data-v="3"]')); click($('stDone'));
-  click($('tabHist')); click(doc.querySelector('#ticks button[data-i="0"]')); click($('start')); await sleep(10);
+  click($('tabSecurity')); click(doc.querySelector('.seg[data-key="secTopic"] button[data-v="hist"]')); click(doc.querySelector('#ticks button[data-i="0"]')); click($('start')); await sleep(10);
   const btns=[...doc.querySelectorAll('#tOpts button')];
   for(const b of btns){ click(b); if($('act').textContent!=='Skip') break; }
   await sleep(1300);

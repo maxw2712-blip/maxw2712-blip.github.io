@@ -12,7 +12,7 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
   await sleep(200);
   for(const mode of ['auto','all','off']){
     click($('settingsBtn')); click(doc.querySelector('#optNight .optBtn[data-v="'+mode+'"]')); click($('stDone'));
-    click($('tabHist')); click(doc.querySelector('#ticks button[data-i="0"]')); click($('start')); await sleep(20);
+    click($('tabSecurity')); click(doc.querySelector('.seg[data-key="secTopic"] button[data-v="hist"]')); click(doc.querySelector('#ticks button[data-i="0"]')); click($('start')); await sleep(20);
     const night1=$('app').classList.contains('era-night'), d1=$('app').style.getPropertyValue('--dusk');
     click($('act')); await sleep(30); click($('act')); await sleep(30);
     console.log(mode.padEnd(5),'history night =',night1,'| dusk q1 =',d1,'-> after next =',$('app').style.getPropertyValue('--dusk'),'| round',$('round').textContent);

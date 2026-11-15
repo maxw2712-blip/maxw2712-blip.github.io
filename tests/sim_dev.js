@@ -27,7 +27,7 @@ const mapClick=(ll)=>{ const p=proj(ll); doc.querySelector('#map').dispatchEvent
   click($('rpSave')); console.log('saved -> panel hidden =',$('reportPanel').hidden,'| reports link:',$('devReports').textContent);
   click($('change')); await sleep(5);
   // 2) trivia, Impossible (timer), report auto-captures the question
-  click($('tabHist')); click(doc.querySelector('#ticks button[data-i="3"]')); click($('start')); await sleep(10);
+  click($('tabSecurity')); click(doc.querySelector('.seg[data-key="secTopic"] button[data-v="hist"]')); click(doc.querySelector('#ticks button[data-i="3"]')); click($('start')); await sleep(10);
   const barBefore=$('timerFill').style.width; click($('reportBtn')); await sleep(250);
   const frozen=$('timerFill').style.width; await sleep(250); console.log('\ntrivia: point button hidden =',$('rpPoint').hidden,'| timer paused while open:',frozen===$('timerFill').style.width);
   $('rpType').value='Wrong date or period'; click($('rpSave')); await sleep(60);

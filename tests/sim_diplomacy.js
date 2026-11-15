@@ -15,6 +15,7 @@ const J=f=>JSON.parse(fs.readFileSync('../src/data/'+f,'utf8'));
 const SEC=J('SEC.json'), CH=J('CHOKES.json'), HQ=J('HQS.json'), T=J('maps/PACKS.json').modern;
 const names=new Set(T.objects.countries.geometries.map(g=>g.properties&&g.properties.name));
 const bySq={}; SEC.forEach(q=>bySq[q.q]=q);
+const TRIV=J('TRIVIA.json');
 const find=n=>[...doc.querySelectorAll('#map path.country')].find(p=>p.__data__.properties.name===n);
 const mapClick=(ll)=>{ const p=proj(ll); doc.querySelector('#map').dispatchEvent(new w.MouseEvent('click',{bubbles:true,clientX:p[0],clientY:p[1]})); };
 const pHits=[];
@@ -49,6 +50,17 @@ async function nextQ(q){ for(let t=0;t<40;t++){ if($('qname').textContent!==q ||
       click(doc.querySelector('#ticks button[data-i="'+lv+'"]')); click($('start')); await sleep(30);
       let n=0, firstTry=0, offTopic=0, kinds={};
       for(let i=0;i<10 && !$('hudTop').hidden;i++){
+        if($('app').classList.contains('trivia')){
+          // a history question inside a mixed game: pick the right option
+          const T=TRIV.find(x=>x.q===$('tQuestion').textContent); if(!T){ errors.push('unknown trivia'); break; }
+          kinds.trivia=(kinds.trivia||0)+1;
+          if(doc.querySelector('#map .tline') || !$('secOpts').hidden) errors.push('treaty leftovers on a trivia question');
+          const before=+$('score').textContent;
+          [...$('tOpts').querySelectorAll('button')].find(b=>b.textContent.slice(1)===T.a).dispatchEvent(new w.MouseEvent('click',{bubbles:true})); await sleep(10);
+          if(+$('score').textContent-before===3) firstTry++;
+          n++; click($('act')); await sleep(20);
+          continue;
+        }
         const sq=bySq[$('qname').textContent]; if(!sq){ errors.push('unknown question '+$('qname').textContent); break; }
         if(topic!=='all' && sq.g!==topic) offTopic++;
         kinds[sq.k]=(kinds[sq.k]||0)+1;
@@ -77,6 +89,9 @@ async function nextQ(q){ for(let t=0;t<40;t++){ if($('qname').textContent!==q ||
       await sleep(30);
       console.log(`${topic.padEnd(6)} L${lv}: ${n} questions ${JSON.stringify(kinds)}, off-topic ${offTopic}, full marks ${firstTry}, end screen ${!$('end').hidden}`);
       if(offTopic) errors.push('off-topic questions in '+topic);
+      if(topic==='all' && kinds.trivia!==4) errors.push('mixed game should have 4 history questions, had '+(kinds.trivia||0));
+      if(topic!=='all' && kinds.trivia) errors.push('trivia in topic '+topic);
+      if(!$('end').hidden && $('app').classList.contains('trivia')) errors.push('map still blurred on the end screen');
       if(!$('end').hidden){
         const row=doc.querySelector('#log li'); if(topic==='treaty') console.log('   end-screen row:', row && row.textContent.slice(0,110));
         click($('change')); await sleep(20);

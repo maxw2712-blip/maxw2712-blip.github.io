@@ -10,7 +10,7 @@ const click=el=>el.dispatchEvent(new w.MouseEvent('click',{bubbles:true}));
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const proj=d3.geoNaturalEarth1().fitExtent([[6,6],[954,494]],{type:'Sphere'});
 // security questions and chokepoints, read from src/ (this used to read an old pipeline file, sec.json)
-const SEC={Q:JSON.parse(fs.readFileSync('../src/data/SEC.json','utf8')), CH:JSON.parse(fs.readFileSync('../src/data/CHOKES.json','utf8'))}; const bySq={}; SEC.Q.forEach(q=>bySq[q.q]=q);
+const SEC={Q:JSON.parse(fs.readFileSync('../src/data/SEC.json','utf8')), CH:Object.assign(JSON.parse(fs.readFileSync('../src/data/CHOKES.json','utf8')), JSON.parse(fs.readFileSync('../src/data/HQS.json','utf8')))}; const bySq={}; SEC.Q.forEach(q=>bySq[q.q]=q);
 const find=n=>[...doc.querySelectorAll('#map path.country')].find(p=>p.__data__.properties.name===n);
 const mapClick=(ll)=>{ const p=proj(ll); doc.querySelector('#map').dispatchEvent(new w.MouseEvent('click',{bubbles:true,clientX:p[0],clientY:p[1]})); };
 (async()=>{
@@ -55,7 +55,7 @@ const mapClick=(ll)=>{ const p=proj(ll); doc.querySelector('#map').dispatchEvent
   click(find('Kenya')); click(find('Japan'));
   console.log('\nexplore: labels',[...doc.querySelectorAll('#map g.plabel text')].map(x=>x.textContent).join(','),'| bar visible',!$('exploreBar').hidden,'| hud hidden',$('hudTop').hidden);
   click($('exploreHome')); await sleep(5); console.log('explore Home -> setup visible',!$('setup').hidden,'labels',doc.querySelectorAll('#map g.plabel').length);
-  click($('tabHist')); console.log('History tab: explore button hidden =',$('tabExplore').hidden);
+  click($('tabSecurity')); click(doc.querySelector('.seg[data-key="secTopic"] button[data-v="hist"]')); console.log('History tab: explore button hidden =',$('tabExplore').hidden);
   // practice misses
   click($('tabMap')); click($('start')); await sleep(10);
   for(let r=0;r<10;r++){ if(r<4){ click($('act')); click($('act')); } else { click($('act')); click($('act')); } }

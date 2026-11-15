@@ -320,7 +320,7 @@ var MODE_NOTE = {
   vienna:'The world in 1815: Europe after Napoleon, the Qing and Ottoman empires, and a Latin America on the brink of independence.',
   ww2:'The world at the end of World War II in 1945, with Germany split into four occupation zones.',
   coldwar:'The world in 1960: the superpowers, the Iron Curtain and a wave of African independence.',
-  security:'Alliances and international organizations, their headquarters, treaties that drew today\u2019s borders, nuclear powers, flashpoints and the straits the world trades through.',
+  security:'History questions, alliances and international organizations, their headquarters, treaties that drew today\u2019s borders, flashpoints and the straits the world trades through.',
   bronze:'The Late Bronze Age, around 1500 BCE: New Kingdom Egypt, the Hittites, Babylonia, Mycenaean Greece and Shang China.',
   classical:'The world around 500 BCE: Persia, the Greek city-states, Carthage, Zhou China and early India.',
   early:'The world around 800 CE: Charlemagne, the Abbasids, Tang China and the Vikings.',
@@ -416,6 +416,8 @@ function getPack(id){
       var ansText = sq.a.slice(0,3).map(function(n){ return S2.items[n] ? S2.items[n].disp : n; }).join(', ') + (sq.a.length>3 ? ' and others' : '');
       S2.items['sq'+i] = {disp:sq.q, answers:sq.a, fact:sq.f, tier:sq.t, choke:sq.k==='p', ch:sq.k==='p' ? S2.items[first] : null, reg:(S2.items[first] ? S2.items[first].reg : ''), ansText:ansText};
     });
+    var HPk = getPack('history');
+    Object.keys(HPk.items).forEach(function(k){ S2.items[k] = HPk.items[k]; });
     packs[id] = S2; return S2;
   }
   if(id==='flags'){
@@ -708,6 +710,7 @@ document.querySelectorAll('.seg').forEach(function(seg){
     setPressed(key, v);
     if(key==='mode'){ setMode(v); return; }
     st[key] = v;
+    if(key==='secTopic'){ setMode(topicMode()); return; }
     applyRegion(); showBest();
   });
 });
@@ -720,10 +723,10 @@ var LEDES = {
   geo: 'Find rivers, mountains, deserts, seas and more on a map with no borders. The fewer tries you need, the more points you score. Games run ten rounds.',
   flags: 'A flag appears and you click its country on the map. The fewer tries you need, the more points you score. Games run ten rounds.',
   planets: 'Find volcanoes, craters, plains and canyons on Mars, the Moon and Venus. The fewer tries you need, the more points you score. Games run ten rounds.',
-  security: 'Alliances, international organizations and their headquarters, treaties that drew borders, flashpoints and the straits the world trades through. Pick a topic, then click the answer on the map. The fewer tries you need, the more points you score. Games run ten rounds.',
+  security: 'History trivia, alliances and organizations, their headquarters, the treaties that drew borders, flashpoints and straits. Pick a topic; All mixes them.',
   history: 'Answer history trivia questions. The fewer tries you need, the more points you score. Games run ten rounds.'
 };
-var TABS = [['map','tabMap'],['geo','tabGeo'],['flags','tabFlags'],['planets','tabPlanets'],['dating','tabDate'],['history','tabHist'],['security','tabSecurity'],['explore','tabExplore']]
+var TABS = [['map','tabMap'],['geo','tabGeo'],['flags','tabFlags'],['planets','tabPlanets'],['dating','tabDate'],['security','tabSecurity'],['explore','tabExplore']]
   .filter(function(t){ return PLANETS_ON || t[0]!=='planets'; });
 function selectTab(tab){
   if(tab==='explore'){ enterExplore(); return; }
@@ -735,7 +738,7 @@ function selectTab(tab){
   $('modeSet').hidden = tab!=='map';
   $('secTopicSet').hidden = tab!=='security';
   $('lede').textContent = LEDES[tab];
-  setMode(tab==='map' || tab==='dating' ? st.lastMap : tab);
+  setMode(tab==='map' || tab==='dating' ? st.lastMap : tab==='security' ? topicMode() : tab);
 }
 TABS.forEach(function(p){ $(p[1]).addEventListener('click', function(){ selectTab(p[0]); }); });
 $('again').addEventListener('click', function(){ if(st.tab==='dating') startDating(); else startGame(); });
@@ -787,6 +790,7 @@ function crossFade(draw){
 }
 $('exploreWorld').addEventListener('click', function(){ var order = Object.keys(BODIES); setBody(order[(order.indexOf(curBody)+1)%order.length]); });
 function toSetup(){
+  if(pack && pack.isSecurity) app.classList.remove('trivia');
   if(st.dating){ st.dating = false; app.classList.remove('dating'); $('dateCtl').hidden = true; app.classList.remove('noterrain'); setMode(st.lastMap); }
   if(st.daily){ var D = loadDaily(); finishDaily(D, st.daily.key); st.daily = null; }
   if(st.dailyPrev){
@@ -847,6 +851,16 @@ function buildFlagQuestions(){
   var m = shuffle(names.slice()).slice(0, ROUNDS - hp.length);
   return shuffle(m.concat(hp)).map(function(n){ return {name:n, type:'flag'}; });
 }
+/* History & Diplomacy (2026-11-15, Max): the History tab became a topic of this tab. The History chip plays the trivia
+   pack as before; "All" mixes 4 history trivia questions with 6 map/treaty questions in the security pack, whose items
+   include the trivia questions ('q'+i) so the end screen and reports can name them. */
+function topicMode(){ return st.secTopic==='hist' ? 'history' : 'security'; }
+function triviaQ(){
+  if(pack && pack.kind==='trivia') return true;
+  var q = st.qs && st.qs[st.i];
+  return !!(q && q.type==='trivia' && st.phase==='play');
+}
+var MIX_TRIVIA = 4;
 function buildSecurity(){
   var tier = st.level+1, topic = st.secTopic || 'all', idxs = [];
   var inTopic = function(sq){ return topic==='all' || (sq.g || 'sec')===topic; };
@@ -856,7 +870,13 @@ function buildSecurity(){
     SEC.forEach(function(sq,i){ if(inTopic(sq) && Math.abs(sq.t-tier)===d) more.push(i); });
     idxs = idxs.concat(shuffle(more).slice(0, ROUNDS-idxs.length));
   }
-  return shuffle(idxs).map(function(i){ return {name:'sq'+i, type:'sec', idx:i}; });
+  var qs = idxs.map(function(i){ return {name:'sq'+i, type:'sec', idx:i}; });
+  if(topic==='all'){
+    var tv = [];
+    TRIVIA.forEach(function(T,i){ if(T.t===tier) tv.push(i); });
+    qs = shuffle(qs).slice(0, ROUNDS-MIX_TRIVIA).concat(shuffle(tv).slice(0, MIX_TRIVIA).map(function(i){ return {name:'q'+i, type:'trivia', idx:i}; }));
+  }
+  return shuffle(qs);
 }
 function buildTrivia(){
   var tier = st.level+1, idxs = [];
@@ -1064,7 +1084,7 @@ function triviaNext(){
   autoNext();
 }
 function triviaPick(i){
-  if(st.phase!=='play' || st.locked || pack.kind!=='trivia') return;
+  if(st.phase!=='play' || st.locked || !triviaQ()) return;
   var q = st.qs[st.i], T = TRIVIA[q.idx], lvl = effLevel(), btns = triviaButtons();
   if(q.opts[i]===T.a){
     var pts = LEVELS[st.level].pts[st.tries];
@@ -1097,7 +1117,8 @@ function triviaReveal(timedOut){
 function showQuestion(){
   if(st.dating){ showDateQ(); return; }
   var q = st.qs[st.i], it = pack.items[q.name], lvl = effLevel();
-  if(pack.kind==='trivia'){ if(isNight()) setDusk(duskFor(st.i)); showTrivia(); return; }
+  if(pack.isSecurity){ app.classList.toggle('trivia', q.type==='trivia'); $('zoomBtns').hidden = q.type==='trivia'; $('secOpts').hidden = true; }
+  if(pack.kind==='trivia' || q.type==='trivia'){ if(isNight()) setDusk(duskFor(st.i)); showTrivia(); return; }
   if(pack.kind==='planet') setBody(it.body);
   st.tries=0; st.locked=false; st.revealed=false;
   if(isNight()) setDusk(duskFor(st.i));
@@ -1924,6 +1945,7 @@ function onPick(el, name){
   if((st.phase!=='play' && st.phase!=='explore') || pack.kind!=='political') return;
   if(!name) return;   // unclaimed land is not a place you can answer with or inspect
   if(st.dating && !st.revealed) return;
+  if(st.phase==='play' && triviaQ()) return;
   if(st.devPick){ devPointed(name); return; }
   var cxy = path.centroid(bigPart(d3.select(el).datum()));
   placeLabel(peekFor(name), name || ('bg:'+cxy.join(',')), cxy, bigFeature(name, d3.select(el).datum()));
@@ -2034,7 +2056,7 @@ function secPick(p, k, q){
   else wrong('not it', null);
 }
 function physPick(ev){
-  if(pack.kind==='trivia' || (st.phase!=='play' && st.phase!=='explore')) return;
+  if(triviaQ() || (st.phase!=='play' && st.phase!=='explore')) return;
   var cq = st.qs[st.i];
   var secChoke = st.phase==='play' && pack.isSecurity && cq && pack.items[cq.name] && pack.items[cq.name].choke;
   if(pack.kind==='political' && !secChoke) return;
@@ -2170,7 +2192,7 @@ function reveal(clicked, timedOut){
   if(st.dating){ dateReveal(timedOut); return; }
   var tq = st.qs[st.i], ti = tq && pack.items[tq.name];
   if(ti && ti.treaty){ treatyReveal(timedOut); return; }
-  if(pack.kind==='trivia'){ triviaReveal(timedOut); return; }
+  if(triviaQ()){ triviaReveal(timedOut); return; }
   if(st.revealed) return;
   var q = st.qs[st.i], it = pack.items[q.name];
   stopTimer();
@@ -2352,6 +2374,7 @@ function shareResult(data, note){
   });
 }
 function endGame(){
+  if(pack.isSecurity) app.classList.remove('trivia');
   st.phase='end'; showPeek(null); app.classList.remove('playing'); app.classList.remove('tint');
   $('hudTop').hidden = true; $('hudBottom').hidden = true;
   var max = st.qs.length*3, pct = max ? st.score/max : 0;
@@ -2415,7 +2438,7 @@ $('zhome').addEventListener('click', function(){
 document.addEventListener('keydown', function(e){
   if(/INPUT|TEXTAREA|SELECT/.test((e.target && e.target.tagName) || '')) return;
   if(DEV_PANELS.concat(['settingsPanel']).some(function(id){ var e = $(id); return e && !e.hidden; })) return;
-  if(pack && pack.kind==='trivia' && st.phase==='play' && !st.locked && e.key>='1' && e.key<='4') triviaPick(parseInt(e.key,10)-1);
+  if(pack && triviaQ() && st.phase==='play' && !st.locked && e.key>='1' && e.key<='4') triviaPick(parseInt(e.key,10)-1);
 });
 
 /* Pause the question timer while a panel is open (Settings, and the dev report panel in the private build). */
@@ -2443,7 +2466,7 @@ function refreshDev(){
   $('reportBtn').hidden = !DEV; $('exploreReport').hidden = !DEV; $('devReports').hidden = !DEV;
   $('devReports').textContent = 'Reports ('+devLoad().length+')';
 }
-var TAB_NAMES = {dating:'Date this map', map:'Nation States', security:'Diplomacy & Security', geo:'Geography', flags:'Flags', planets:'Planets', history:'History'};
+var TAB_NAMES = {dating:'Date this map', map:'Nation States', security:'History & Diplomacy', geo:'Geography', flags:'Flags', planets:'Planets', history:'History'};
 function devTargetInfo(key){
   if(!key) return null;
   var it = pack.items[key] || {}, d = {key:key, name:it.disp || key};
@@ -2484,7 +2507,7 @@ function openReport(){
   if(!devDraft.target && st.lastKey) devDraft.target = devTargetInfo(st.lastKey);
   $('rpContext').textContent = 'Where: '+devWhere()+'\nQuestion: '+devQuestion();
   $('rpTarget').textContent = devTargetText();
-  $('rpPoint').hidden = pack.kind==='trivia';
+  $('rpPoint').hidden = triviaQ();
   $('reportPanel').hidden = false;
 }
 function devPointed(key){
