@@ -15,6 +15,14 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Pinpoint: a geography game</title>
+<link rel="manifest" href="manifest.webmanifest">
+<meta name="theme-color" content="#0d2a3a">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Pinpoint">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500..800&family=Figtree:wght@400;500;600;700&family=EB+Garamond:wght@500;600;700&display=swap" rel="stylesheet">
@@ -69,10 +77,20 @@
     <button type="button" class="homeBtn" id="exploreWorld" hidden>Switch world</button>
     <button type="button" class="homeBtn" id="masteryBtn" aria-pressed="false" hidden>Mastery</button>
     <button type="button" class="homeBtn" id="exploreWeak" hidden>Practice weak spots</button>
+    <button type="button" class="homeBtn" id="allyBtn" aria-pressed="false" hidden>Alliances</button>
     <!-- @dev-start -->
     <button type="button" class="homeBtn" id="exploreReport" hidden>Report</button>
     <!-- @dev-end -->
     <button type="button" class="homeBtn" id="exploreHome">Home</button>
+    <div class="eraBar" id="eraBar" hidden><span class="eraEnd">1500 BCE</span><input type="range" id="eraRange" min="0" max="10" step="1" value="10" aria-label="Period"><span class="eraEnd">Today</span></div>
+    <div class="allyBar" id="allyBar" hidden>
+      <select id="allySel" aria-label="Alliance"><option value="NATO">NATO</option><option value="EU">European Union</option><option value="WARSAW">Warsaw Pact</option><option value="BRICS">BRICS</option><option value="ASEAN">ASEAN</option></select>
+      <button type="button" class="homeBtn dateStep" id="allyPlay" aria-label="Play the years">&#9654;</button>
+      <input type="range" id="allyRange" min="1945" max="2026" step="1" value="2026" aria-label="Year">
+      <b class="allyYear" id="allyYear"></b>
+      <span class="allyNote" id="allyNote"></span>
+      <span class="allyMore" id="allyMore"></span>
+    </div>
     <div class="masteryKey" id="masteryKey" hidden><span><i class="mk weak"></i>Weak <b id="mkWeak">0</b></span><span><i class="mk mid"></i>Learning <b id="mkMid">0</b></span><span><i class="mk good"></i>Mastered <b id="mkGood">0</b></span><span><i class="mk none"></i>Not asked <b id="mkNone">0</b></span></div>
   </div>
 
@@ -133,7 +151,7 @@
       <fieldset id="secTopicSet" hidden>
         <legend>Topic</legend>
         <div class="seg" data-key="secTopic">
-          <button type="button" data-v="all" aria-pressed="true">All</button><button type="button" data-v="hist" aria-pressed="false">History</button><button type="button" data-v="sec" aria-pressed="false">Security</button><button type="button" data-v="org" aria-pressed="false">Organizations</button><button type="button" data-v="treaty" aria-pressed="false">Treaties</button>
+          <button type="button" data-v="all" aria-pressed="true">All</button><button type="button" data-v="hist" aria-pressed="false">History</button><button type="button" data-v="sec" aria-pressed="false">Security</button><button type="button" data-v="org" aria-pressed="false">Organizations</button><button type="button" data-v="treaty" aria-pressed="false">Treaties &amp; leaders</button>
         </div>
       </fieldset>
       <fieldset id="modeSet">
@@ -240,8 +258,13 @@
       </fieldset>
       <fieldset id="optNightBox">
         <legend>Night map</legend>
-        <div class="optRow" id="optNight"><button type="button" class="optBtn" data-v="auto">Security &amp; Cold War</button><button type="button" class="optBtn" data-v="all">All maps</button><button type="button" class="optBtn" data-v="off">Off</button></div>
+        <div class="optRow" id="optNight"><button type="button" class="optBtn" data-v="auto">Diplomacy &amp; Cold War</button><button type="button" class="optBtn" data-v="all">All maps</button><button type="button" class="optBtn" data-v="off">Off</button></div>
         <small class="optNote">Dark ocean, glowing borders and city lights; in a game it gets darker with every question.<span class="planetsOnly"> Planets keep their own look.</span></small>
+      </fieldset>
+      <fieldset id="installBox">
+        <legend>Install</legend>
+        <div class="optRow"><button type="button" class="optBtn" id="installBtn" hidden>Install Pinpoint</button></div>
+        <small class="optNote" id="installNote">Add Pinpoint to your home screen to play full screen, even offline.</small>
       </fieldset>
       <!-- @dev-start -->
       <div class="devrow"><label><input type="checkbox" id="devToggle"> <span>Dev mode: report problems while you play</span></label><button type="button" class="homeBtn" id="devReports" hidden>Reports (0)</button></div>

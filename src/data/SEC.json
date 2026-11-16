@@ -1170,5 +1170,95 @@
     "line": {"mesh": [["Bulgaria", "Romania"]]},
     "f": "Romania had taken Southern Dobruja in 1913; Germany pressed it to hand the region back in 1940.",
     "k": "t"
+  },
+  {
+    "t": 1,
+    "g": "treaty",
+    "q": "Poland signed the Treaty of Versailles (1919) as a newly restored state. What was its capital?",
+    "a": ["Warsaw"],
+    "o": ["Kraków", "Vilnius", "Poznań"],
+    "f": "Poland was restored in November 1918 with Warsaw as its capital.",
+    "k": "t"
+  },
+  {
+    "t": 1,
+    "g": "treaty",
+    "q": "Hungary signed the Treaty of Trianon (1920). From which capital was it governed?",
+    "a": ["Budapest"],
+    "o": ["Vienna", "Pozsony (Bratislava)", "Debrecen"],
+    "f": "Budapest became the capital of a fully independent Hungary when Austria-Hungary broke up in 1918.",
+    "k": "t"
+  },
+  {
+    "t": 2,
+    "g": "treaty",
+    "q": "The government that signed the Treaty of Lausanne (1923) for Turkey sat in which city?",
+    "a": ["Ankara"],
+    "o": ["Constantinople", "Izmir", "Bursa"],
+    "f": "The Grand National Assembly sat in Ankara; Ankara became the capital of the new republic that October.",
+    "k": "t"
+  },
+  {
+    "t": 2,
+    "g": "treaty",
+    "q": "Weeks after signing the Treaty of Brest-Litovsk (1918), Soviet Russia moved its capital to which city?",
+    "a": ["Moscow"],
+    "o": ["Petrograd", "Kiev", "Kazan"],
+    "f": "The Bolsheviks moved the capital from Petrograd to Moscow in March 1918.",
+    "k": "t"
+  },
+  {
+    "t": 2,
+    "g": "treaty",
+    "q": "Portugal signed the Treaty of Tordesillas (1494). Where was its royal capital?",
+    "a": ["Lisbon"],
+    "o": ["Coimbra", "Porto", "Évora"],
+    "f": "Lisbon had replaced Coimbra as the capital in the 13th century.",
+    "k": "t"
+  },
+  {
+    "t": 3,
+    "g": "treaty",
+    "q": "The Qing emperor whose envoys signed the Treaty of Nerchinsk (1689) with Russia ruled from which city?",
+    "a": ["Beijing"],
+    "o": ["Shenyang", "Nanjing", "Xi'an"],
+    "f": "The Qing moved their capital from Shenyang (Mukden) to Beijing in 1644.",
+    "k": "t"
+  },
+  {
+    "t": 3,
+    "g": "treaty",
+    "q": "Prussia signed the Final Act of the Congress of Vienna (1815). What was its capital?",
+    "a": ["Berlin"],
+    "o": ["Königsberg", "Potsdam", "Breslau"],
+    "f": "Berlin was the capital; Potsdam was the royal residence nearby.",
+    "k": "t"
+  },
+  {
+    "t": 3,
+    "g": "treaty",
+    "q": "Japan signed the Treaty of Shimonoseki (1895) with China. What was Japan's capital?",
+    "a": ["Tokyo"],
+    "o": ["Kyoto", "Osaka", "Nagasaki"],
+    "f": "The emperor had moved from Kyoto to Edo, renamed Tokyo, in 1868-69.",
+    "k": "t"
+  },
+  {
+    "t": 4,
+    "g": "treaty",
+    "q": "Soviet Armenia was one of the signatories of the Treaty of Kars (1921). What was its capital?",
+    "a": ["Yerevan"],
+    "o": ["Tbilisi", "Gyumri", "Kars"],
+    "f": "Yerevan has been Armenia's capital since 1918.",
+    "k": "t"
+  },
+  {
+    "t": 4,
+    "g": "treaty",
+    "q": "Emperor Ferdinand III, whose envoys signed the Peace of Westphalia (1648), ruled from which city?",
+    "a": ["Vienna"],
+    "o": ["Prague", "Munich", "Aachen"],
+    "f": "The Habsburg emperors ruled from Vienna; Rudolf II had used Prague until 1612.",
+    "k": "t"
   }
 ]

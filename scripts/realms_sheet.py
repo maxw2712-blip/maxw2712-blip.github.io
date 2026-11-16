@@ -39,6 +39,17 @@ QUESTION = {
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from add_capitals import CAPS
 CAP_NOTE = 'Capital added 2026-11-12 (was blank)'
+FC_PATH = os.path.join(ROOT, 'scripts', 'factcheck', 'results.json')
+FC = json.load(open(FC_PATH, encoding='utf-8')) if os.path.exists(FC_PATH) else {}
+FC_DATE = '2026-11-15'
+
+
+def fc(sheet_name, key, note):
+    """Append the Wikipedia fact-check finding (scripts/factcheck/results.json) to a Check note."""
+    extra = FC.get(sheet_name, {}).get(key, '')
+    return f'{note}; {extra}' if note and extra else (note or extra)
+
+
 QUESTION_MODERN = {'Indonesia': 'Watch: becomes Nusantara once the move is made official'}
 
 
@@ -104,6 +115,8 @@ def main():
         (f'Sheet "Realms by period" lists every historical realm in the game: {n_realms} rows across 10 periods.', A10),
         (f'Sheet "Modern countries" lists the {len(raw)} modern countries and the capitals the game uses.', A10),
         ('Sheet "Diplomacy & Security" lists every question in that tab with its answers and fact (tier 1 = Easy ... 4 = Impossible).', A10),
+        ('Sheets "Heads of state 1914" and "Alliances" list the data behind the generated questions and the Explore alliances map.', A10),
+        (f'Notes starting "Check:" come from the Wikipedia fact check of {FC_DATE}: Claude could not confirm them there, so please look.', A10),
         ('Sheet "On this day" lists the event shown on the menu for each of the 366 calendar dates (check the date and year).', A10),
         (f'Generated from the game source (src/) by scripts/realms_sheet.py; regenerate it after data changes.', A10), None,
         ('How to use it', B10),
@@ -136,7 +149,7 @@ def main():
                 c = ws.cell(i, j, v); c.font = A10
             note = r[ck - 1] or ''
             if note.startswith('Fixed'): ws.cell(i, ck).fill = FIXF
-            elif note.startswith(('Your call', 'Minor', 'Watch', 'Capital added')): ws.cell(i, ck).fill = ASKF
+            elif note.startswith(('Your call', 'Minor', 'Watch', 'Capital added', 'Check')) or '; Check' in note: ws.cell(i, ck).fill = ASKF
             ws.cell(i, yc).fill = YEL
             ws.cell(i, ck).alignment = Alignment(wrap_text=True, vertical='top')
         for j, w in enumerate(widths): ws.column_dimensions[chr(65 + j)].width = w
@@ -146,7 +159,7 @@ def main():
     rows = []
     for pid, plabel in PERIODS:
         for mn, dn, cap, reg in H[pid]:
-            note = FIXED.get((pid, mn)) or QUESTION.get((pid, mn)) or ''
+            note = fc('Realms by period', f'{pid}|{mn}', FIXED.get((pid, mn)) or QUESTION.get((pid, mn)) or '')
             if mn in CAPS.get(pid, {}): note = f'{note}; {CAP_NOTE}' if note else CAP_NOTE
             added = prev_added.get((plabel, mn))
             if not added and prev and (plabel, mn) not in prev:
@@ -169,9 +182,9 @@ def main():
     orows = []
     for k in sorted(otd):
         date = f'{int(k[3:])} {months[int(k[:2])-1]}'
-        orows.append([date, otd[k][0], otd[k][1], '', old.get(('On this day', date, otd[k][0]), '')])
+        orows.append([date, otd[k][0], otd[k][1], fc('On this day', k, ''), old.get(('On this day', date, otd[k][0]), '')])
     sheet('On this day', ['Date', 'Year', 'Event shown on the menu', f'Check ({CHECK_DATE})', 'Your correction'],
-          orows, [14, 10, 90, 16, 40])
+          orows, [14, 10, 90, 48, 40])
     # Diplomacy & Security questions (organizations, HQ cities and treaties added 2026-11-14)
     sec = json.load(open(os.path.join(SRC, 'data', 'SEC.json'), encoding='utf-8'))
     topic = {'sec': 'Security', 'org': 'Organizations', 'treaty': 'Treaties'}
@@ -179,11 +192,25 @@ def main():
     srows = []
     for i, q in enumerate(sec):
         ans = ', '.join(q['a']) + (('  (wrong options: ' + ', '.join(q['o']) + ')') if q.get('o') else '')
-        note = 'Added 2026-11-14' if i >= 70 else ''
+        note = fc('Diplomacy & Security', q['q'], 'Added 2026-11-14' if i >= 70 else '')
         t = topic.get(q.get('g'), '')
         srows.append([q['q'], t, q['t'], kind.get(q['k'], q['k']), ans, q['f'], note, old.get(('Diplomacy & Security', q['q'], t), '')])
     sheet('Diplomacy & Security', ['Question', 'Topic', 'Tier', 'Type', 'Correct answer(s)', 'Fact shown',
-                                   f'Check ({CHECK_DATE})', 'Your correction'], srows, [60, 14, 6, 16, 60, 70, 16, 40])
+                                   f'Check ({CHECK_DATE})', 'Your correction'], srows, [60, 14, 6, 16, 60, 70, 40, 40])
+    # Generated questions (2026-11-15): heads of state in July 1914 and the alliance membership used by Explore > Alliances
+    heads = json.load(open(os.path.join(SRC, 'data', 'HEADS1914.json'), encoding='utf-8'))
+    hrows = [[h[1], h[2], h[3], h[0], fc('Heads of state 1914', h[0], ''), old.get(('Heads of state 1914', h[1], h[2]), '')] for h in heads]
+    sheet('Heads of state 1914', ['State', 'Head of state in July 1914', 'Tier', 'Country clicked on the map',
+                                  f'Check ({CHECK_DATE})', 'Your correction'], hrows, [40, 44, 6, 26, 40, 40])
+    ally = json.load(open(os.path.join(SRC, 'data', 'ALLIANCES.json'), encoding='utf-8'))
+    arows = []
+    for key, A in ally.items():
+        for m in A['members']:
+            left = m[2] if len(m) > 2 and m[2] else ''
+            part = 'Only part (until %s)' % m[3] if len(m) > 3 and m[3] else ''
+            arows.append([A['name'], m[0], m[1], left, part, fc('Alliances', f'{key}|{m[0]}', ''), old.get(('Alliances', A['name'], m[0]), '')])
+    sheet('Alliances', ['Alliance', 'Country (today\'s borders)', 'Joined', 'Left', 'Hatched', f'Check ({CHECK_DATE})', 'Your correction'],
+          arows, [36, 28, 8, 8, 20, 40, 40])
     wb.save(OUT)
     print(f'wrote {os.path.relpath(OUT, ROOT)}: {len(rows)} realms, {len(mrows)} modern countries; '
           f'{sum(1 for r in rows if (r[6] or "").startswith("Fixed"))} fixed, '

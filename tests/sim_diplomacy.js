@@ -15,7 +15,7 @@ const J=f=>JSON.parse(fs.readFileSync('../src/data/'+f,'utf8'));
 const SEC=J('SEC.json'), CH=J('CHOKES.json'), HQ=J('HQS.json'), T=J('maps/PACKS.json').modern;
 const names=new Set(T.objects.countries.geometries.map(g=>g.properties&&g.properties.name));
 const bySq={}; SEC.forEach(q=>bySq[q.q]=q);
-const TRIV=J('TRIVIA.json');
+const TRIV=J('TRIVIA.json'), HEADS=J('HEADS1914.json'), ALLY=J('ALLIANCES.json'); const gen={};
 const find=n=>[...doc.querySelectorAll('#map path.country')].find(p=>p.__data__.properties.name===n);
 const mapClick=(ll)=>{ const p=proj(ll); doc.querySelector('#map').dispatchEvent(new w.MouseEvent('click',{bubbles:true,clientX:p[0],clientY:p[1]})); };
 const pHits=[];
@@ -31,6 +31,7 @@ async function nextQ(q){ for(let t=0;t<40;t++){ if($('qname').textContent!==q ||
     if(s.k==='t'){
       if(new Set(s.a.concat(s.o)).size!==4) errors.push('treaty options not 4 distinct: '+s.q);
       const L=s.line; let segs=0;
+      if(!L) return;
       if(L.coords) segs=1; else {
         (L.mesh||[]).flat().concat(L.around?[L.around]:[]).forEach(n=>{ if(!names.has(n)) errors.push('unknown country in line: '+n); });
         const m=topojson.mesh(T,T.objects.countries,(a,b)=>a!==b&&(L.around?(a.properties.name===L.around||b.properties.name===L.around):L.mesh.some(pr=>(a.properties.name===pr[0]&&b.properties.name===pr[1])||(a.properties.name===pr[1]&&b.properties.name===pr[0]))));
@@ -39,6 +40,7 @@ async function nextQ(q){ for(let t=0;t<40;t++){ if($('qname').textContent!==q ||
       if(!segs) errors.push('empty border line: '+s.q);
     }
   });
+  HEADS.forEach(h=>{ if(!names.has(h[0])) errors.push('1914 table: unknown country '+h[0]); });
   console.log('questions by topic', JSON.stringify(groups), '| HQ cities', Object.keys(HQ).length);
   await sleep(200);
   click($('tabSecurity')); await sleep(20);
@@ -46,7 +48,7 @@ async function nextQ(q){ for(let t=0;t<40;t++){ if($('qname').textContent!==q ||
   // ---- each topic and level: questions stay in the topic; answer them correctly
   for(const topic of ['treaty','org','sec','all']){
     click(doc.querySelector('.seg[data-key="secTopic"] button[data-v="'+topic+'"]'));
-    for(const lv of [0,3]){
+    for(const lv of (topic==='org' ? [0,1,1,3] : [0,3])){
       click(doc.querySelector('#ticks button[data-i="'+lv+'"]')); click($('start')); await sleep(30);
       let n=0, firstTry=0, offTopic=0, kinds={};
       for(let i=0;i<10 && !$('hudTop').hidden;i++){
@@ -61,12 +63,28 @@ async function nextQ(q){ for(let t=0;t<40;t++){ if($('qname').textContent!==q ||
           n++; click($('act')); await sleep(20);
           continue;
         }
-        const sq=bySq[$('qname').textContent]; if(!sq){ errors.push('unknown question '+$('qname').textContent); break; }
+        let sq=bySq[$('qname').textContent];
+        if(!sq){
+          // generated at load: 1914 heads of state and "which member is missing?"
+          const qt=$('qname').textContent, hm=qt.match(/^Who was the head of state of (.*) in July 1914\?$/);
+          if(hm){ const h=HEADS.find(x=>x[1]===hm[1]); sq={g:'treaty',k:'t',a:[h[2]],q:qt,gen:'head'}; }
+          else if(/member is not shaded/.test(qt)){
+            const shaded=new Set([...doc.querySelectorAll('#map .missFill')].map(p=>p.getAttribute('d')));
+            const key=qt.includes('NATO')?'NATO':qt.includes('European Union')?'EU':qt.includes('BRICS')?'BRICS':'ASEAN';
+            const now=new Date().getFullYear(), cur=ALLY[key].members.filter(m=>m[1]<=now&&!(m[2]&&now>=m[2])).map(m=>m[0]);
+            const missing=cur.filter(n=>{ const el=find(n); return el && !shaded.has(el.getAttribute('d')); });
+            if(missing.length!==1) errors.push('missing-member question has '+missing.length+' unshaded members: '+missing.join(','));
+            sq={g:'org',k:'c',a:[missing[0]],q:qt,gen:'miss'};
+          }
+          else { errors.push('unknown question '+qt); break; }
+          gen[sq.gen]=(gen[sq.gen]||0)+1;
+        }
         if(topic!=='all' && sq.g!==topic) offTopic++;
         kinds[sq.k]=(kinds[sq.k]||0)+1;
         const before=+$('score').textContent;
         if(sq.k==='t'){
-          if(!doc.querySelector('#map .tline')) errors.push('no line drawn');
+          if((sq.line || sq.gen==='head') && !doc.querySelector('#map .tline')) errors.push('no line drawn');
+          if(!sq.line && sq.gen!=='head' && doc.querySelector('#map .tline')) errors.push('stray line on a treaty-capital question');
           const btns=[...$('secOpts').querySelectorAll('button')];
           if(btns.length!==4 || $('secOpts').hidden) errors.push('options missing');
           btns.find(b=>b.textContent===sq.a[0]).dispatchEvent(new w.MouseEvent('click',{bubbles:true})); await sleep(10);
@@ -99,6 +117,7 @@ async function nextQ(q){ for(let t=0;t<40;t++){ if($('qname').textContent!==q ||
     }
   }
   console.log('city clicks on Easy:', pHits.join(', '));
+  console.log('generated questions seen:', JSON.stringify(gen)); if(!gen.head || !gen.miss) errors.push('generated questions never came up');
   console.log('best keys:', Object.keys(w.localStorage).filter(k=>k.includes('security')).join(', '));
   console.log('errors',errors); process.exit(0);
 })();

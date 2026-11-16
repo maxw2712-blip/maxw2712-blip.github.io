@@ -409,12 +409,12 @@ function getPack(id){
     SEC.forEach(function(sq,i){
       if(sq.k==='t'){
         // "which treaty drew this border?": a highlighted line and four treaty names to choose from
-        S2.items['sq'+i] = {disp:sq.q, answers:[], treaty:true, line:sq.line, opts:sq.a.concat(sq.o), fact:sq.f, tier:sq.t, reg:'', ansText:sq.a[0], choke:false};
+        S2.items['sq'+i] = {disp:sq.q, answers:[], treaty:true, line:sq.line || null, opts:sq.a.concat(sq.o), fact:sq.f, tier:sq.t, reg:'', ansText:sq.a[0], choke:false};
         return;
       }
       var first = sq.a[0];
       var ansText = sq.a.slice(0,3).map(function(n){ return S2.items[n] ? S2.items[n].disp : n; }).join(', ') + (sq.a.length>3 ? ' and others' : '');
-      S2.items['sq'+i] = {disp:sq.q, answers:sq.a, fact:sq.f, tier:sq.t, choke:sq.k==='p', ch:sq.k==='p' ? S2.items[first] : null, reg:(S2.items[first] ? S2.items[first].reg : ''), ansText:ansText};
+      S2.items['sq'+i] = {disp:sq.q, answers:sq.a, miss:sq.miss || null, fact:sq.f, tier:sq.t, choke:sq.k==='p', ch:sq.k==='p' ? S2.items[first] : null, reg:(S2.items[first] ? S2.items[first].reg : ''), ansText:ansText};
     });
     var HPk = getPack('history');
     Object.keys(HPk.items).forEach(function(k){ S2.items[k] = HPk.items[k]; });
@@ -747,9 +747,10 @@ $('weakBtn').addEventListener('click', startWeakPractice);
 $('exploreWeak').addEventListener('click', startWeakPractice);
 $('masteryBtn').addEventListener('click', function(){
   st.mastery = !st.mastery;
+  if(st.mastery) allyOff();
   clearLabels();
   if(pack.kind==='political') autoLabelAll();
-  drawMastery(); refreshMastery();
+  drawMastery(); refreshMastery(); refreshExploreTools();
 });
 $('shareBtn').addEventListener('click', function(){ shareResult(); });
 $('dailyBtn').addEventListener('click', function(){
@@ -790,6 +791,7 @@ function crossFade(draw){
 }
 $('exploreWorld').addEventListener('click', function(){ var order = Object.keys(BODIES); setBody(order[(order.indexOf(curBody)+1)%order.length]); });
 function toSetup(){
+  allyOff();
   if(pack && pack.isSecurity) app.classList.remove('trivia');
   if(st.dating){ st.dating = false; app.classList.remove('dating'); $('dateCtl').hidden = true; app.classList.remove('noterrain'); setMode(st.lastMap); }
   if(st.daily){ var D = loadDaily(); finishDaily(D, st.daily.key); st.daily = null; }
@@ -868,7 +870,10 @@ function buildSecurity(){
   for(var d=0; d<=3 && idxs.length<ROUNDS; d++){
     var more = [];
     SEC.forEach(function(sq,i){ if(inTopic(sq) && Math.abs(sq.t-tier)===d) more.push(i); });
-    idxs = idxs.concat(shuffle(more).slice(0, ROUNDS-idxs.length));
+    // generated questions share their wording ("One NATO member is not shaded"): at most one of each per game
+    shuffle(more).forEach(function(i){
+      if(idxs.length<ROUNDS && !idxs.some(function(j){ return SEC[j].q===SEC[i].q; })) idxs.push(i);
+    });
   }
   var qs = idxs.map(function(i){ return {name:'sq'+i, type:'sec', idx:i}; });
   if(topic==='all'){
@@ -999,6 +1004,8 @@ function startExplore(){
   $('exploreWorld').hidden = pack.kind!=='planet';
   if(pack.kind==='political') autoLabelAll();
   drawMastery(); refreshMastery();
+  if(pack.id!=='modern') allyOff(); else drawAlly();
+  refreshExploreTools();
 }
 /* Explore: every nation shows its flag, name and capital from the start; labels too small to read appear as you zoom in. */
 function autoLabelAll(){
@@ -1152,6 +1159,7 @@ function showQuestion(){
   setPips(); hideToast();
   startTimer(lvl.time);
   if(it && it.treaty) showTreaty(it);
+  else if(it && it.miss) showMissing(it);
   else if(lvl.tricky) scatterView(q);
 }
 
@@ -1397,6 +1405,124 @@ function layoutLabels(){
   });
   flushFadeIns();
 }
+/* ---------- Explore: alliances over time and the period slider (2026-11-15) ----------
+   Alliances (modern map only): pick NATO, the EU, the Warsaw Pact, BRICS or ASEAN and a year; members are shaded in the
+   alliance colour, the rest grey. ALLIANCES.json rows: [country, joined, left (first year no longer a member) or null,
+   partUntil: until that year only part of today's country belonged (West/East Germany), drawn hatched]. The period
+   slider steps through the 11 nation maps in time order and switches the Explore map when you let go. */
+var ALLY = __JSON__("data/ALLIANCES.json");
+/* Generated questions (2026-11-15): "which member is missing?" from ALLIANCES (today's members, one left unshaded) and
+   "who was head of state in July 1914?" from HEADS1914 (the country outlined, four names). They are appended to SEC at
+   load, with fresh random picks each visit, so the security pack and buildSecurity treat them like the others. */
+var HEADS1914 = __JSON__("data/HEADS1914.json");
+(function(){
+  var now = new Date().getFullYear();
+  [['NATO',2,4],['EU',2,4],['BRICS',3,2],['ASEAN',3,2]].forEach(function(spec){
+    var A = ALLY[spec[0]], cur = A.members.filter(function(m){ return m[1]<=now && !(m[2] && now>=m[2]); });
+    shuffle(cur.slice()).slice(0, spec[2]).forEach(function(m){
+      var label = spec[0]==='EU' ? 'European Union' : spec[0];
+      SEC.push({t:spec[1], g:'org', k:'c', q:'One '+label+' member is not shaded. Click it.', a:[m[0]], miss:spec[0],
+        f:m[0]+' joined '+label+' in '+m[1]+'.'});
+    });
+  });
+  HEADS1914.forEach(function(h){
+    var others = HEADS1914.filter(function(x){ return x!==h && Math.abs(x[3]-h[3])<=1; });
+    SEC.push({t:h[3], g:'treaty', k:'t', q:'Who was the head of state of '+h[1]+' in July 1914?', a:[h[2]],
+      o:shuffle(others.slice()).slice(0,3).map(function(x){ return x[2]; }), line:{around:h[0]},
+      f:h[2]+' headed '+h[1]+' when the First World War broke out.'});
+  });
+})();
+var ERA_ORDER = ['bronze','classical','ancient','early','medieval','discovery','vienna','wwi','ww2','coldwar','modern'];
+// THIS_YEAR is defined further down (Date this map), so read the year here directly
+$('allyRange').max = new Date().getFullYear();
+function allyMembers(key, y){
+  var A = ALLY[key], out = {};
+  A.members.forEach(function(m){
+    if(m[1]<=y && !(m[2] && y>=m[2])) out[m[0]] = {part: !!(m[3] && y<m[3])};
+  });
+  return out;
+}
+function allyOff(){ st.ally = null; allyStop(); if(fills) fills.selectAll('g.ally').remove(); app.classList.remove('allying'); }
+function drawAlly(){
+  if(!fills) return;
+  fills.selectAll('g.ally').remove();
+  g.select('defs').selectAll('.allyDef').remove();
+  if(!st.ally || st.phase!=='explore' || pack.id!=='modern'){ app.classList.remove('allying'); return; }
+  app.classList.add('allying');
+  var A = ALLY[st.ally], y = st.allyYear, mem = allyMembers(st.ally, y);
+  var pat = g.select('defs').append('pattern').attr('class','allyDef').attr('id','allyHatch').attr('patternUnits','userSpaceOnUse')
+    .attr('width',1.6).attr('height',1.6).attr('patternTransform','rotate(45)');
+  pat.append('rect').attr('width',1.6).attr('height',1.6).attr('fill', A.color).attr('fill-opacity',.35);
+  pat.append('rect').attr('width',.7).attr('height',1.6).attr('fill', A.color);
+  var ag = fills.append('g').attr('class','ally');
+  pack.features.forEach(function(f){
+    var nm = f.properties && f.properties.name;
+    if(!nm) return;
+    var m = mem[nm];
+    ag.append('path').attr('d', path(f)).attr('class', m ? 'allyOn' : 'allyOff')
+      .attr('fill', m ? (m.part ? 'url(#allyHatch)' : A.color) : null);
+  });
+  var n = Object.keys(mem).length, part = Object.keys(mem).some(function(k){ return mem[k].part; });
+  $('allyYear').textContent = y;
+  $('allyNote').textContent = y < A.founded ? A.name+' was founded in '+A.founded+'.'
+    : (A.ended && y>=A.ended) ? A.name+' was dissolved in '+A.ended+'.'
+    : n+' '+(n===1 ? 'country' : 'countries')+' on this map'+(part ? '; hatched = only part of today\u2019s country belonged.' : '.');
+  $('allyMore').textContent = A.note;
+}
+var allyTimer = null;
+function allyStop(){ if(allyTimer){ clearInterval(allyTimer); allyTimer = null; } $('allyPlay').innerHTML = '&#9654;'; }
+$('allyBtn').addEventListener('click', function(){
+  if(st.ally) allyOff();
+  else {
+    if(st.mastery){ st.mastery = false; drawMastery(); refreshMastery(); }
+    st.ally = $('allySel').value;
+    st.allyYear = ALLY[st.ally].ended ? 1980 : THIS_YEAR;
+    $('allyRange').value = st.allyYear;
+    drawAlly();
+  }
+  refreshExploreTools();
+});
+$('allySel').addEventListener('change', function(){
+  allyStop(); st.ally = this.value;
+  var A = ALLY[st.ally];
+  if(A.ended && st.allyYear>=A.ended) st.allyYear = A.ended-1;
+  if(st.allyYear < A.founded) st.allyYear = A.founded;
+  $('allyRange').value = st.allyYear; drawAlly();
+});
+$('allyRange').addEventListener('input', function(){ allyStop(); st.allyYear = +this.value; drawAlly(); });
+$('allyPlay').addEventListener('click', function(){
+  if(allyTimer){ allyStop(); return; }
+  var A = ALLY[st.ally], end = A.ended ? A.ended : THIS_YEAR;
+  if(st.allyYear>=end || st.allyYear<A.founded) st.allyYear = A.founded;
+  $('allyPlay').innerHTML = '&#10074;&#10074;';
+  drawAlly(); $('allyRange').value = st.allyYear;
+  allyTimer = setInterval(function(){
+    if(st.phase!=='explore' || !st.ally){ allyStop(); return; }
+    st.allyYear++; $('allyRange').value = st.allyYear; drawAlly();
+    if(st.allyYear>=end) allyStop();
+  }, reduce ? 600 : 250);
+});
+var eraT = null;
+$('eraRange').addEventListener('input', function(){
+  var v = ERA_ORDER[+this.value];
+  $('exploreMode').value = v;
+  clearTimeout(eraT);
+  eraT = setTimeout(function(){
+    if(st.exploreMode===v) return;
+    st.exploreMode = v;
+    crossFade(function(){ setMode(v); startExplore(); });
+  }, 280);
+});
+function refreshExploreTools(){
+  var exp = st.phase==='explore', era = ERA_ORDER.indexOf(pack.id);
+  $('eraBar').hidden = !exp || era<0 || !!st.ally;
+  if(era>=0) $('eraRange').value = era;
+  $('allyBtn').hidden = !exp || pack.id!=='modern';
+  $('allyBtn').setAttribute('aria-pressed', st.ally ? 'true' : 'false');
+  $('allyBtn').classList.toggle('on', !!st.ally);
+  $('allyBar').hidden = !exp || !st.ally || pack.id!=='modern';
+}
+
 /* ---------- Treaties and borders (2026-11-14) ----------
    SEC entries with k:'t' highlight a border and offer four treaties. line = {coords:[[lon,lat],...]} for a drawn line,
    {mesh:[[A,B],...]} for today's border between countries A and B, or {around:A} for all of A's land borders. */
@@ -1417,20 +1543,32 @@ function treatyGeom(line){
   return (treatyCache[key] = g);
 }
 function showTreaty(it){
-  var g = treatyGeom(it.line);
-  marks.append('path').attr('class','tlineHalo').attr('d', path(g));
-  marks.append('path').attr('class','tline').attr('d', path(g));
-  var b = path.bounds(g), dx = Math.max(b[1][0]-b[0][0], 1), dy = Math.max(b[1][1]-b[0][1], 1);
-  var k = Math.max(1, Math.min(30, 0.55/Math.max(dx/W, dy/H)));
-  var cx = (b[0][0]+b[1][0])/2, cy = (b[0][1]+b[1][1])/2;
-  moveTo(d3.zoomIdentity.translate(W/2-k*cx, H/2-k*cy).scale(k), reduce ? 0 : 500);
-  $('hint').textContent = 'Pick the treaty above. Tap a country to see its name.';
+  // a treaty or 1914 question with a map line zooms to it; a treaty-capital question has no line and keeps the view
+  if(it.line){
+    var g = treatyGeom(it.line);
+    marks.append('path').attr('class','tlineHalo').attr('d', path(g));
+    marks.append('path').attr('class','tline').attr('d', path(g));
+    var b = path.bounds(g), dx = Math.max(b[1][0]-b[0][0], 1), dy = Math.max(b[1][1]-b[0][1], 1);
+    var k = Math.max(1, Math.min(30, 0.55/Math.max(dx/W, dy/H)));
+    var cx = (b[0][0]+b[1][0])/2, cy = (b[0][1]+b[1][1])/2;
+    moveTo(d3.zoomIdentity.translate(W/2-k*cx, H/2-k*cy).scale(k), reduce ? 0 : 500);
+  }
+  $('hint').textContent = 'Pick the answer above. Tap a country to see its name.';
   var box = $('secOpts'); box.innerHTML = ''; box.hidden = false;
   shuffle(it.opts.slice()).forEach(function(o){
     var bt = document.createElement('button'); bt.type = 'button'; bt.className = 'topt'; bt.textContent = o;
     bt.addEventListener('click', function(){ treatyPick(bt, o); });
     box.appendChild(bt);
   });
+}
+/* "which member is missing?": every current member except the answer is shaded in the alliance colour */
+function showMissing(it){
+  var A = ALLY[it.miss], now = new Date().getFullYear(), ans = it.answers[0];
+  var mem = A.members.filter(function(m){ return m[1]<=now && !(m[2] && now>=m[2]) && m[0]!==ans; }).map(function(m){ return m[0]; });
+  pack.features.forEach(function(f){
+    if(mem.indexOf(f.properties.name)>=0) marks.append('path').attr('class','missFill').attr('d', path(f)).attr('fill', A.color);
+  });
+  $('hint').textContent = 'Click the member that is not shaded. Scroll or pinch to zoom.';
 }
 function treatyPick(bt, o){
   if(st.phase!=='play' || st.locked) return;
@@ -1774,6 +1912,8 @@ function paintFlag(key, fill, feat){
     if(painted && paths) paths.filter(function(d){ return d.properties.name===key; }).classed('flagged', true);
     var mg = fills.select('g.mastery');
     if(!mg.empty()) mg.raise();
+    var ag = fills.select('g.ally');
+    if(!ag.empty()) ag.raise();
 }
 /* Label text: the name in bold, the capital lighter and smaller. Handles "Kenya (Nairobi)" and merged names such as
    "Egypt (New Kingdom · Thebes)" (base "Egypt (New Kingdom)"). */
@@ -2569,6 +2709,31 @@ $('rvCopy').addEventListener('click', function(){
 refreshDev();
 // @dev-end
 
+/* ---------- Install as an app (2026-11-15) ----------
+   manifest.webmanifest + sw.js at the site root make the game installable and playable offline. Android/desktop Chrome
+   fire beforeinstallprompt (an Install button in Settings); iPhone needs Share > Add to Home Screen, so Settings says so.
+   Registration only on https (GitHub Pages) or localhost; elsewhere (the claude.ai dev copy) it is skipped. */
+var installEvt = null;
+var standalone = (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches) || window.navigator.standalone===true;
+if('serviceWorker' in navigator && (location.protocol==='https:' || location.hostname==='localhost' || location.hostname==='127.0.0.1')){
+  try{ navigator.serviceWorker.register('sw.js').catch(function(){}); }catch(e){}
+}
+window.addEventListener('beforeinstallprompt', function(e){ e.preventDefault(); installEvt = e; refreshInstall(); });
+window.addEventListener('appinstalled', function(){ installEvt = null; standalone = true; refreshInstall(); });
+function refreshInstall(){
+  var ios = /iPhone|iPad|iPod/.test(navigator.userAgent);
+  $('installBtn').hidden = !installEvt;
+  $('installNote').textContent = standalone ? 'Installed: Pinpoint runs from your home screen and works offline.'
+    : installEvt ? 'Add Pinpoint to your home screen to play full screen, even offline.'
+    : ios ? 'On iPhone or iPad: tap Share, then \u201cAdd to Home Screen\u201d. It then plays full screen, even offline.'
+    : 'In Chrome or Edge, use the install icon in the address bar (or the menu) to add Pinpoint as an app; it then works offline.';
+}
+$('installBtn').addEventListener('click', function(){
+  if(!installEvt) return;
+  installEvt.prompt();
+  installEvt.userChoice.then(function(){ installEvt = null; refreshInstall(); }, function(){});
+});
+
 /* ---------- Settings ---------- */
 var CFG = {auto:false, delay:5, night:'auto'};
 try{
@@ -2580,6 +2745,7 @@ try{
 function saveCfg(){ try{ localStorage.setItem('pinpoint:cfg', JSON.stringify(CFG)); }catch(e){} }
 function settingsOpen(){ return !$('settingsPanel').hidden; }
 function refreshSettings(){
+  refreshInstall();
   $('optAuto').checked = CFG.auto;
   $('optDelayBox').disabled = !CFG.auto;
   document.querySelectorAll('#optDelay .optBtn').forEach(function(b){ b.classList.toggle('on', +b.getAttribute('data-v')===CFG.delay); });

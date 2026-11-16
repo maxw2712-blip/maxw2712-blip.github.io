@@ -542,3 +542,20 @@ legend{padding:0;margin-bottom:6px;font-weight:600;font-size:.95rem}
 .secOpts[hidden]{display:none}
 .secOpts .topt{font-size:.9rem;padding:9px 12px}
 @media (max-width:620px){ .secOpts{gap:6px} .secOpts .topt{font-size:.8rem;padding:8px 10px} }
+
+/* ---------- Explore: alliances over time, period slider ---------- */
+.ally path{stroke:none;pointer-events:none}
+.allyOn{fill-opacity:.88}
+.allyOff{fill:var(--mst-none);fill-opacity:.8}
+#allyBtn.on{background:var(--ink);color:var(--panel);border-color:var(--ink)}
+.allyBar{flex-basis:100%;display:flex;flex-wrap:wrap;align-items:center;gap:6px 10px}
+.allyBar select{font:inherit;font-size:.85rem;font-weight:600;color:var(--ink);background:var(--panel);border:1.5px solid var(--line);border-radius:999px;padding:5px 10px}
+.allyBar input[type=range]{flex:1;min-width:120px;accent-color:#f0b400}
+.allyYear{font-family:"Bricolage Grotesque",system-ui,sans-serif;font-size:1.15rem;min-width:3ch}
+.allyNote{font-size:.8rem;color:var(--muted);line-height:1.35}
+.allyMore{flex-basis:100%;font-size:.74rem;color:var(--muted);line-height:1.35}
+.eraBar{flex-basis:100%;display:flex;align-items:center;gap:8px;font-size:.72rem;color:var(--muted)}
+.eraBar input{flex:1;accent-color:#f0b400}
+.eraBar[hidden],.allyBar[hidden]{display:none}
+@media (max-width:620px){ .allyNote{flex-basis:100%;font-size:.72rem} .allyMore{display:none} }
+.missFill{fill-opacity:.55;stroke:none;pointer-events:none}

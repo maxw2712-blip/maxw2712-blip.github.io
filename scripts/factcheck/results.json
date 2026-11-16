@@ -1,0 +1,25 @@
+{
+ "On this day": {
+  "01-20": "Check: Not listed on Wikipedia's date page for this day; Claude believes it is right, please confirm",
+  "02-28": "Check: Not listed on Wikipedia's date page for this day; Claude believes it is right, please confirm",
+  "04-05": "Check: Not listed on Wikipedia's date page for this day; Claude believes it is right, please confirm",
+  "05-15": "Check: Not listed on Wikipedia's date page for this day; Claude believes it is right, please confirm",
+  "06-21": "Check: Not listed on Wikipedia's date page for this day; Claude believes it is right, please confirm",
+  "07-22": "Check: Not listed on Wikipedia's date page for this day; Claude believes it is right, please confirm",
+  "08-24": "Check: Wikipedia now dates the Vesuvius eruption to autumn 79 (24 August is the traditional date, as the text says)",
+  "08-31": "Check: Not listed on Wikipedia's date page for this day; Claude believes it is right, please confirm",
+  "10-27": "Check: Not listed on Wikipedia's date page for this day; Claude believes it is right, please confirm",
+  "11-13": "Check: Not listed on Wikipedia's date page for this day; Claude believes it is right, please confirm",
+  "09-08": "Fixed 2026-11-15: said the treaty ended the occupation on signing; it came into force in April 1952"
+ },
+ "Diplomacy & Security": {
+  "Click a member of the Gulf Cooperation Council.": "Check: Bahrain is also a member but is too small for the map, so it is not an answer",
+  "Click the home country of a leader who launched the Non-Aligned Movement in 1961.": "Check: Serbia stands in for Tito's Yugoslavia (today's map)"
+ },
+ "Realms by period": {
+  "bronze|Greek city-states": "Check: Mycenaean Greece was several palace states (Mycenae, Pylos, Thebes...), not one kingdom; keep Mycenae as capital or blank it?",
+  "medieval|Castilla": "Check: the Castilian court moved around (Toledo, Burgos, Valladolid); Toledo is the usual choice but not a fixed capital",
+  "discovery|Castille": "Check: the Castilian court moved around (Toledo, Burgos, Valladolid); Toledo is the usual choice but not a fixed capital",
+  "discovery|Mali": "Check: Niani as Mali's capital is disputed; historians have not found the site for certain"
+ }
+}
