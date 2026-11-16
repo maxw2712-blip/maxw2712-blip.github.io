@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 240">
+  <!-- Roman vexillum: crimson cloth with gold SPQR and a gold fringe. Drawn for Pinpoint, public domain. -->
+  <rect width="320" height="240" fill="#8e1b1b"/>
+  <rect x="10" y="10" width="300" height="192" fill="none" stroke="#d9a72b" stroke-width="6"/>
+  <text x="160" y="128" text-anchor="middle" font-family="Georgia, 'Times New Roman', serif" font-size="74" font-weight="bold" letter-spacing="6" fill="#e3b53a">SPQR</text>
+  <path d="M60 150 q100 26 200 0" fill="none" stroke="#e3b53a" stroke-width="5"/>
+  <g fill="#d9a72b">
+    <rect x="0" y="210" width="320" height="8"/>
+    <path d="M0 218 h320 v22 h-320z" fill="#b8861f"/>
+  </g>
+  <g stroke="#8e1b1b" stroke-width="3"><path d="M8 218v22M24 218v22M40 218v22M56 218v22M72 218v22M88 218v22M104 218v22M120 218v22M136 218v22M152 218v22M168 218v22M184 218v22M200 218v22M216 218v22M232 218v22M248 218v22M264 218v22M280 218v22M296 218v22M312 218v22"/></g>
+</svg>

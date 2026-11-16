@@ -1,0 +1,11 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 320 240">
+  <!-- Chakana (Andean stepped cross) on a cream field. Drawn for Pinpoint, public domain. -->
+  <rect width="320" height="240" fill="#f3ead6"/>
+  <g transform="translate(160 120)" fill="#b3261e">
+    <rect x="-22" y="-99" width="44" height="198"/>
+    <rect x="-99" y="-22" width="198" height="44"/>
+    <rect x="-55" y="-77" width="110" height="154"/>
+    <rect x="-77" y="-55" width="154" height="110"/>
+    <circle r="20" fill="#f3ead6"/>
+  </g>
+</svg>
