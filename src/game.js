@@ -81,6 +81,13 @@ if(!PLANETS_ON) document.querySelectorAll('.planetsOnly').forEach(function(e){ e
 var PFEATS = __JSON__("data/PFEATS.json");
 var BODIES = {mars:{R:3389.5, label:'Mars', short:'Mars'}, moon:{R:1737.4, label:'the Moon', short:'Moon'}, venus:{R:6051.8, label:'Venus', short:'Venus'}};
 var FLAGS = __IMAGES__("flags/modern");
+/* Micro-states (2026-11-16, Max): the 29 UN members (and Vatican City) too small for the 110m modern map. Rows:
+   [name, capital or null (city-states and Nauru), region, lon, lat, area km2, flag-icons code]. Each becomes a circle at its
+   real location that never shrinks below MICRO_PX screen pixels (microResize), asked only on Hard and Impossible
+   (at most MICRO_CAP per game). In Explore their labels follow the usual rules (leader line, at most 40 px away). */
+var MICRO = __JSON__("data/MICRO.json");
+var MICRO_SET = {}; MICRO.forEach(function(r){ MICRO_SET[r[0]] = 1; });
+var MICRO_PX = 5, MICRO_HIT = 13, MICRO_CAP = {hard:2, impossible:3};
 var HFLAGS = __JSON__("data/HFLAGS.json");
 var FAME = __JSON__("data/FAME.json");
 FAME.H = {ancient:FAME.A, medieval:FAME.D};
@@ -345,12 +352,13 @@ var zoom = d3.zoom().scaleExtent([1,60]).translateExtent([[0,0],[W,H]]).clickDis
   .on('zoom', function(e){
     g.attr('transform', e.transform);
     fireScale(e.transform.k);
+    microResize();
     if(labels) labels.selectAll('g.plabel').attr('transform', function(d){ var k = e.transform.k, nom = d.nom || 1, s = d.fit ? (d.out ? Math.max(Math.min(nom/k, d.fit), (d.sp || 0.55)/k) : Math.min(nom/k, d.fit)) : 1/k; return 'translate('+d.x+','+d.y+') scale('+s+')'; });
   })
-  .on('end', function(){ if(labelRecs.length) layoutLabels(); });
+  .on('end', function(){ microFlags(); if(labelRecs.length) layoutLabels(); });
 // label sizes depend on how large the map is drawn, so lay them out again after a resize or rotation
 var resizeT = null;
-window.addEventListener('resize', function(){ clearTimeout(resizeT); resizeT = setTimeout(function(){ if(labelRecs.length) layoutLabels(); }, 150); });
+window.addEventListener('resize', function(){ clearTimeout(resizeT); resizeT = setTimeout(function(){ microResize(); microFlags(); if(labelRecs.length) layoutLabels(); }, 150); });
 svg.call(zoom).on('dblclick.zoom', null);
 svg.on('click.pick', function(ev){ physPick(ev); });
 
@@ -382,6 +390,34 @@ function moveTo(t, dur){
   svg.transition().duration(dur===undefined?DUR:dur).call(zoom.transform, t);
 }
 
+/* Micro-states: keep each dot at least MICRO_PX screen pixels wide at any zoom (true size when zoomed in far enough). */
+function microScale(){
+  var k = d3.zoomTransform(svg.node()).k, sr = svg.node().getBoundingClientRect(), px = Math.min(sr.width/W, sr.height/H) || 1;
+  return k*px;
+}
+function microResize(force){
+  if(!pack || pack.kind!=='political' || !pack.features) return;
+  var kp = microScale(), changed = !!force;
+  pack.features.forEach(function(f){
+    if(!f.properties.micro) return;
+    var a = proj([f.center[0], f.center[1]-0.5]), b = proj([f.center[0], f.center[1]+0.5]);
+    var upd = Math.hypot(a[0]-b[0], a[1]-b[1]) || 2.7;
+    var deg = Math.max(f.trueDeg, MICRO_PX/(kp*upd));
+    if(!force && f.curDeg && Math.abs(deg-f.curDeg) < f.curDeg*0.02) return;
+    f.curDeg = deg; f.geometry = d3.geoCircle().center(f.center).radius(deg).precision(10)(); changed = true;
+  });
+  if(!changed) return;
+  g.selectAll('path.country').filter(function(d){ return d && d.properties && d.properties.micro; }).attr('d', path);
+  g.selectAll('path[data-micro]').attr('d', function(){ return path(pack.byName[this.getAttribute('data-micro')]); });
+  g.selectAll('g.microHit circle').attr('r', MICRO_HIT/kp);
+}
+// flags painted on micro-states are clipped to the dot, so repaint them once a zoom ends
+function microFlags(){
+  if(!fills || !pack || pack.kind!=='political') return;
+  var keys = {};
+  fills.selectAll('.pfill').each(function(){ var k = this.getAttribute('data-key'); if(MICRO_SET[k] && pack.items[k] && pack.items[k].micro) keys[k] = d3.select(this).select('image').attr('href'); });
+  Object.keys(keys).forEach(function(k){ paintFlag(k, keys[k], pack.byName[k]); });
+}
 /* ---------- Packs ---------- */
 var packs = {};
 var pack = null, paths = null, marks = null, labels = null, fills = null, leads = null, curBody = 'mars';
@@ -439,6 +475,13 @@ function getPack(id){
     P.neighbors = {};
     idx.forEach(function(n,i){ P.neighbors[n] = nb[i].map(function(j){ return idx[j]; }).filter(function(m){ return P.items[m]; }); });
     P.features = topojson.feature(t, t.objects.countries).features.filter(function(f){ return f.properties.name!=='Antarctica'; });
+    MICRO.forEach(function(r){
+      var f = {type:'Feature', properties:{name:r[0], micro:true}, center:[r[3], r[4]], trueDeg:Math.sqrt(r[5]/Math.PI)/6371*180/Math.PI};
+      f.geometry = d3.geoCircle().center(f.center).radius(f.trueDeg).precision(10)();
+      P.features.push(f);
+      P.items[r[0]] = {disp:r[0], cap:r[1], reg:R[r[2]], micro:true};
+      P.neighbors[r[0]] = [];
+    });
     P.kind='political'; P.noun='country'; P.past=false;
   } else if(HIST[id]){
     t = PACKS[id];
@@ -551,13 +594,23 @@ function drawPack(){
   g.append('path').attr('class','graticule').attr('d', path(d3.geoGraticule10()));
   if(pack.kind==='political'){
     paths = g.selectAll('path.country').data(pack.features).join('path')
-      .attr('class', function(d){ return 'country'+(d.properties.name ? '' : ' bg'); })
+      .attr('class', function(d){ return 'country'+(d.properties.name ? '' : ' bg')+(d.properties.micro ? ' micro' : ''); })
       .attr('d', path)
       .on('click', function(ev, d){ onPick(ev.currentTarget, d.properties.name || null); });
     if(pack.isSecurity){
       g.selectAll('path.feat').data(pack.chokeFeatures).join('path').attr('class','feat pl').attr('d', path);
       paths = g.selectAll('path.country, path.feat');
     }
+    microResize(true);
+    // a generous invisible tap target over each micro-state dot, sized in screen pixels
+    var mf = pack.features.filter(function(f){ return f.properties.micro; });
+    g.append('g').attr('class','microHit').selectAll('circle').data(mf).join('circle')
+      .attr('cx', function(f){ return proj(f.center)[0]; }).attr('cy', function(f){ return proj(f.center)[1]; })
+      .on('click', function(ev, f){
+        var el = paths.filter(function(d){ return d===f; }).node();
+        if(el) onPick(el, f.properties.name);
+      });
+    microResize(true);
   } else if(pack.kind==='planet'){
     paths = g.selectAll('path.feat').data(pack.byBody[curBody]).join('path').attr('class','feat pl').attr('d', path);
   } else if(pack.kind==='trivia'){
@@ -837,14 +890,20 @@ function borderPuzzle(n){
   }
   return opts.length ? opts[Math.floor(Math.random()*opts.length)] : null;
 }
+// micro-states are tiny targets: only on Hard and Impossible, and at most MICRO_CAP of them in one game
+// (all of them are eligible on both levels, whatever the fame band, so every game draws from all 29)
+function capMicro(names, lvlId, pool){
+  var micro = pool.filter(function(n){ return MICRO_SET[n]; }), rest = names.filter(function(n){ return !MICRO_SET[n]; });
+  return rest.concat(shuffle(micro).slice(0, MICRO_CAP[lvlId] || 0));
+}
 function buildFlagQuestions(){
   var L = LEVELS[st.level];
-  var modern = Object.keys(pack.items).filter(function(n){ return !pack.items[n].hist; });
+  var modern = Object.keys(pack.items).filter(function(n){ return !pack.items[n].hist && !(MICRO_SET[n] && !MICRO_CAP[L.id]); });
   var sz = pack.rank || pack.size;
   modern.sort(function(a,b){ return sz[b]-sz[a]; });
   var frac = (L.id==='easy' && EASY_FRAC.flags!==undefined) ? EASY_FRAC.flags : L.band[1];
   var keep = Math.max(Math.min(ROUNDS, modern.length), Math.ceil(modern.length*frac));
-  var names = L.band[0]==='top' ? modern.slice(0,keep) : modern.slice(modern.length-keep);
+  var names = capMicro(L.band[0]==='top' ? modern.slice(0,keep) : modern.slice(modern.length-keep), L.id, modern);
   var hist = Object.keys(pack.items).filter(function(n){ return pack.items[n].hist; });
   var quota = 0, hp = [];
   if(L.id==='hard'){ quota = 3; hp = hist.filter(function(n){ return pack.items[n].tier==='hard'; }); }
@@ -896,6 +955,7 @@ function buildQuestions(){
   var all = Object.keys(pack.items).filter(function(n){
     var it = pack.items[n];
     if(pack.kind==='physical') return st.cat==='all' || it.cat===st.cat;
+    if(it.micro && !MICRO_CAP[lvl.id]) return false;
     return true;
   });
   var sz = pack.rank || pack.size;
@@ -904,7 +964,7 @@ function buildQuestions(){
   var ec = lvl.id==='easy' ? EASY_COUNT[pack.id] : undefined;
   var floor = ec || Math.min(ROUNDS, all.length);
   var keep = ec ? ec : Math.max(floor, Math.ceil(all.length*frac));
-  var names = lvl.band[0]==='top' ? all.slice(0,keep) : all.slice(all.length-keep);
+  var names = capMicro(lvl.band[0]==='top' ? all.slice(0,keep) : all.slice(all.length-keep), lvl.id, all);
   // Impossible should still ask about capitals in the older periods, where the very obscurest realms rarely have a known capital
   if(lvl.tricky && pack.kind==='political' && pack.id!=='modern'){
     var added = 0;
@@ -1418,7 +1478,7 @@ var HEADS1914 = __JSON__("data/HEADS1914.json");
 (function(){
   var now = new Date().getFullYear();
   [['NATO',2,4],['EU',2,4],['BRICS',3,2],['ASEAN',3,2]].forEach(function(spec){
-    var A = ALLY[spec[0]], cur = A.members.filter(function(m){ return m[1]<=now && !(m[2] && now>=m[2]); });
+    var A = ALLY[spec[0]], cur = A.members.filter(function(m){ return m[1]<=now && !(m[2] && now>=m[2]) && !MICRO_SET[m[0]]; });
     shuffle(cur.slice()).slice(0, spec[2]).forEach(function(m){
       var label = spec[0]==='EU' ? 'European Union' : spec[0];
       SEC.push({t:spec[1], g:'org', k:'c', q:'One '+label+' member is not shaded. Click it.', a:[m[0]], miss:spec[0],
@@ -1459,7 +1519,7 @@ function drawAlly(){
     var nm = f.properties && f.properties.name;
     if(!nm) return;
     var m = mem[nm];
-    ag.append('path').attr('d', path(f)).attr('class', m ? 'allyOn' : 'allyOff')
+    ag.append('path').attr('d', path(f)).attr('data-micro', f.properties.micro ? f.properties.name : null).attr('class', m ? 'allyOn' : 'allyOff')
       .attr('fill', m ? (m.part ? 'url(#allyHatch)' : A.color) : null);
   });
   var n = Object.keys(mem).length, part = Object.keys(mem).some(function(k){ return mem[k].part; });
@@ -1746,7 +1806,7 @@ function drawMastery(){
     // overseas territories (Greenland...) are not answers: grey them too, so their own flags don't stand out
     if(!nm || (!pack.items[nm] && (TERRITORY_FLAGS[pack.id] || []).indexOf(nm)<0)) return;
     var m = pack.items[nm] ? masteryOf(nm) : null;
-    mg.append('path').attr('d', path(f)).attr('class', m ? 'mst' : 'mst none').attr('fill', m ? mColor(m.acc) : null);
+    mg.append('path').attr('d', path(f)).attr('data-micro', f.properties.micro ? f.properties.name : null).attr('class', m ? 'mst' : 'mst none').attr('fill', m ? mColor(m.acc) : null);
   });
 }
 function refreshMastery(){
@@ -2002,7 +2062,7 @@ function labelXY(label, fallback){
 var peekCache = {}, modernB = null;
 function modernBoxes(){
   if(modernB) return modernB;
-  modernB = getPack('modern').features.map(function(cf){ return {name:cf.properties.name, f:cf, b:d3.geoBounds(cf)}; });
+  modernB = getPack('modern').features.filter(function(cf){ return !cf.properties.micro; }).map(function(cf){ return {name:cf.properties.name, f:cf, b:d3.geoBounds(cf)}; });
   return modernB;
 }
 function inBox(b, lon, lat){

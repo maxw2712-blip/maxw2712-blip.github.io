@@ -198,8 +198,8 @@
       "Slovenia",
       "Spain",
       "Sweden"
-    ],
-    "f": "The EU has 27 members. Malta is a member too, but it's too small to appear on this map.",
+    , "Malta"],
+    "f": "The EU has 27 members, from Portugal to Finland and from Ireland to Cyprus and Malta.",
     "k": "c",
     "g": "org"
   },
@@ -669,8 +669,8 @@
     "t": 2,
     "g": "org",
     "q": "Click a country that joined the EU in the 2004 enlargement.",
-    "a": ["Cyprus", "Czechia", "Estonia", "Hungary", "Latvia", "Lithuania", "Poland", "Slovakia", "Slovenia"],
-    "f": "Ten countries joined on 1 May 2004; the tenth, Malta, is too small for this map.",
+    "a": ["Cyprus", "Czechia", "Estonia", "Hungary", "Latvia", "Lithuania", "Poland", "Slovakia", "Slovenia", "Malta"],
+    "f": "Ten countries joined on 1 May 2004, the largest enlargement in EU history.",
     "k": "c"
   },
   {
@@ -685,8 +685,8 @@
     "t": 2,
     "g": "org",
     "q": "Click a founding member of ASEAN (1967).",
-    "a": ["Indonesia", "Malaysia", "Philippines", "Thailand"],
-    "f": "ASEAN was founded in Bangkok in 1967; the fifth founder, Singapore, is too small for this map.",
+    "a": ["Indonesia", "Malaysia", "Philippines", "Thailand", "Singapore"],
+    "f": "ASEAN was founded in Bangkok in 1967 by Indonesia, Malaysia, the Philippines, Singapore and Thailand.",
     "k": "c"
   },
   {
@@ -741,8 +741,8 @@
     "t": 3,
     "g": "org",
     "q": "Click a member of the Gulf Cooperation Council.",
-    "a": ["Kuwait", "Oman", "Qatar", "Saudi Arabia", "United Arab Emirates"],
-    "f": "The GCC was founded in 1981; its sixth member, Bahrain, is too small for this map.",
+    "a": ["Kuwait", "Oman", "Qatar", "Saudi Arabia", "United Arab Emirates", "Bahrain"],
+    "f": "The GCC was founded in 1981 by Saudi Arabia, Kuwait, Bahrain, Qatar, the UAE and Oman.",
     "k": "c"
   },
   {

@@ -14,6 +14,8 @@ const proj=d3.geoNaturalEarth1().fitExtent([[6,6],[954,494]],{type:'Sphere'});
 const J=f=>JSON.parse(fs.readFileSync('../src/data/'+f,'utf8'));
 const SEC=J('SEC.json'), CH=J('CHOKES.json'), HQ=J('HQS.json'), T=J('maps/PACKS.json').modern;
 const names=new Set(T.objects.countries.geometries.map(g=>g.properties&&g.properties.name));
+// micro-states (2026-11-16) are added to the modern map at load from MICRO.json
+JSON.parse(fs.readFileSync("../src/data/MICRO.json","utf8")).forEach(r=>names.add(r[0]));
 const bySq={}; SEC.forEach(q=>bySq[q.q]=q);
 const TRIV=J('TRIVIA.json'), HEADS=J('HEADS1914.json'), ALLY=J('ALLIANCES.json'); const gen={};
 const find=n=>[...doc.querySelectorAll('#map path.country')].find(p=>p.__data__.properties.name===n);

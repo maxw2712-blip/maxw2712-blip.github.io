@@ -17,7 +17,7 @@ const sleep=ms=>new Promise(r=>setTimeout(r,ms));
   const count=()=>doc.querySelectorAll('#map g.ally .allyOn').length;
   const setYear=y=>{ const r=$('allyRange'); r.value=String(y); r.dispatchEvent(new w.Event('input',{bubbles:true})); };
   const setA=v=>{ const s=$('allySel'); s.value=v; s.dispatchEvent(new w.Event('change',{bubbles:true})); };
-  const want={NATO:[[1949,12],[1952,14],[1980,15],[2004,26],[2024,32]], EU:[[1958,6],[1973,9],[2019,27],[2020,26],[2026,26]], WARSAW:[[1960,23],[1970,22],[1991,0]], BRICS:[[2009,4],[2010,5],[2025,10]], ASEAN:[[1967,4],[1999,9],[2026,10]]};
+  const want={NATO:[[1949,12],[1952,14],[1980,15],[2004,26],[2024,32]], EU:[[1958,6],[1973,9],[2004,25],[2019,28],[2020,27],[2026,27]], WARSAW:[[1960,23],[1970,22],[1991,0]], BRICS:[[2009,4],[2010,5],[2025,10]], ASEAN:[[1967,5],[1999,10],[2026,11]]};
   for(const [a,rows] of Object.entries(want)){
     setA(a); await sleep(5);
     for(const [y,n] of rows){
