@@ -47,7 +47,9 @@ button{font:inherit;color:inherit;cursor:pointer}
 #app.space .relief{filter:none!important}
 .feat.pl{fill:none;stroke:none}
 .feat.pl.hit,.feat.pl.reveal{fill:var(--gold)!important;fill-opacity:.35!important;stroke:var(--gold)!important;stroke-opacity:1!important;stroke-width:2px!important}
-#app.noterrain .relief{display:none}
+#app.noterrain .relief,#app.noterrain .depth{display:none}
+/* ocean depth (2026-11-17): darker blue over deep water; follows the terrain (hidden with it), toned per theme below */
+.depth{pointer-events:none}
 #app.noterrain .land{fill:var(--land)}
 #app.noterrain .feat.sea{fill-opacity:.5}
 #app.noterrain .feat.area{fill-opacity:.07}
@@ -376,6 +378,8 @@ legend{padding:0;margin-bottom:6px;font-weight:600;font-size:.95rem}
 }
 #app.era-parchment #paper{display:block}
 #app.era-parchment .relief{filter:sepia(.78) saturate(.6) hue-rotate(-6deg) brightness(1.04) contrast(.9)}
+/* on parchment the depth prints as warm brown ink (multiply), not grey */
+#app.era-parchment .depth{filter:sepia(1) saturate(2.5) brightness(1.9) hue-rotate(-10deg);mix-blend-mode:multiply;opacity:.62}
 #app.era-parchment .graticule{stroke:var(--parch-line);stroke-opacity:.12}
 #app.era-parchment .country{stroke:var(--parch-line);stroke-opacity:.55}
 #app.era-parchment .pfill{filter:sepia(.35) saturate(.8)}
@@ -423,6 +427,7 @@ legend{padding:0;margin-bottom:6px;font-weight:600;font-size:.95rem}
   --tint-eu:#3c5778; --tint-as:#6e5a32; --tint-af:#6b4434; --tint-am:#42603f; --tint-oc:#365e5a;
   background:#03070f}
 #app.era-night .relief{filter:saturate(.35) brightness(.7);opacity:calc(.6 - .42*var(--dusk));transition:opacity 1.4s ease}
+#app.era-night .depth{filter:saturate(.6) brightness(.55);opacity:.85}
 #app.era-night .lights{display:block;pointer-events:none;mix-blend-mode:screen;opacity:calc(.22 + .78*var(--dusk));transition:opacity 1.4s ease}
 #app.era-night .glowlines{display:block;fill:none;stroke:#57bdff;stroke-opacity:.16;stroke-width:4.5px;stroke-linejoin:round;vector-effect:non-scaling-stroke;pointer-events:none}
 #app.era-night .graticule{stroke:#57bdff;stroke-opacity:.07}

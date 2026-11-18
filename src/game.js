@@ -73,6 +73,9 @@ var REGION_BOX = {
 };
 
 var RELIEF = __IMAGE__("img/relief.webp");
+// ocean depth shading (2026-11-17): Natural Earth 10m bathymetry as navy with alpha by depth, same frame as RELIEF
+// (scripts/make_depth.mjs); drawn over the terrain on Earth maps, toned per theme in style.css
+var DEPTH = __IMAGE__("img/depth.webp");
 var PIMG = __IMAGES__("img/planets");
 /* Planets mode is archived (Max, 2026-11-13): build.py leaves the planet textures out unless run with --planets, and
    with no textures the Planets tab, its Explore option and its credit line are removed. All planet code and data stay. */
@@ -591,6 +594,8 @@ function drawPack(){
   defs.append('clipPath').attr('id','sphereClip').append('path').attr('d', path({type:'Sphere'}));
   g.append('image').attr('class','relief').attr('href', pack.kind==='planet' ? PIMG[curBody] : RELIEF).attr('x',0).attr('y',0).attr('width',W).attr('height',H)
     .attr('preserveAspectRatio','none').attr('clip-path','url(#sphereClip)');
+  if(pack.kind!=='planet') g.append('image').attr('class','depth').attr('href', DEPTH).attr('x',0).attr('y',0).attr('width',W).attr('height',H)
+    .attr('preserveAspectRatio','none').attr('clip-path','url(#sphereClip)');
   g.append('path').attr('class','graticule').attr('d', path(d3.geoGraticule10()));
   if(pack.kind==='political'){
     paths = g.selectAll('path.country').data(pack.features).join('path')
@@ -828,7 +833,7 @@ function crossFade(draw){
   var pairs = [['.relief',['filter']], ['.sphere',['fill']], ['.graticule',['stroke','stroke-opacity']], ['.country',['stroke','stroke-opacity','fill','fill-opacity']],
                ['.plabel text',['font-family','font-size','font-weight','fill']], ['.plabel text tspan.pcap',['font-family','font-size','font-weight','font-style','fill']],
                ['.plabel rect.pbox',['fill']], ['.ptint',['fill','fill-opacity']], ['.pfill',['filter']],
-               ['.lights',['display','opacity']], ['g.fire circle',['opacity']], ['.glowlines',['display','stroke','stroke-opacity','stroke-width']], ['.relief',['opacity']]];
+               ['.lights',['display','opacity']], ['g.fire circle',['opacity']], ['.glowlines',['display','stroke','stroke-opacity','stroke-width']], ['.relief',['opacity']], ['.depth',['filter','opacity','display','mix-blend-mode']]];
   pairs.forEach(function(p){
     var a = old.querySelectorAll(p[0]), b = snap.querySelectorAll(p[0]);
     for(var i=0; i<a.length && i<b.length; i++){
