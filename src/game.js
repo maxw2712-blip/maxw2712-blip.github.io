@@ -134,7 +134,7 @@ var RFLAGS = __IMAGES__("flags/realms");
 });
 // "name:modern flag key" when the modern flag is filed under another name
 // (Bhutan is left out: it had no national flag until 1949)
-['Haiti','Dominican Republic:Dominican Rep.','Nicaragua','Costa Rica','Guatemala','Honduras','El Salvador','Panama','Bolivia','Paraguay','Uruguay','Ecuador','Liberia','Iceland','Luxembourg','Andorra','Mexico','Yemen','Oman'].forEach(function(n){
+['Haiti','Dominican Republic:Dominican Rep.','Nicaragua','Costa Rica','Guatemala','Honduras','El Salvador','Panama','Bolivia','Paraguay','Uruguay','Ecuador','Liberia','Iceland','Luxembourg','Andorra','Mexico'].forEach(function(n){
   var a = n.split(':'); if(FLAGS[a[1] || a[0]]) RFLAGS['ww2|'+a[0]] = FLAGS[a[1] || a[0]];
 });
 // 1960: states whose flag at the end of 1960 is the one they fly today (the others have their own files in flags/realms)
@@ -160,8 +160,8 @@ var RFLAGS = __IMAGES__("flags/realms");
 // 1815: colonies fly the ruling power's flag (the Bourbon white flag for France)
 [['United Kingdom', ['British West Indies','British Ceylon','British Sierra Leone','British New South Wales']],
  ['Netherlands', ['United Kingdom of the Netherlands','Dutch Guiana (Suriname)','Dutch Cura\u00e7ao','Dutch East Indies']],
- ['Kingdom of France', ['French West Indies','French Senegal']],
- ['Portugal', ['Portuguese Angola','Portuguese Mozambique','Portuguese Goa','Portuguese Guinea']],
+ ['vienna|France', ['French West Indies','French Senegal']],
+ ['vienna|Portugal', ['Portuguese Angola','Portuguese Mozambique','Portuguese Goa','Portuguese Guinea']],
  ['Spain', ['Spanish Philippines']], ['Sweden\u2013Norway', ['Swedish Saint Barth\u00e9lemy']]].forEach(function(pr){
   var src = RFLAGS[pr[0]] || FLAGS[pr[0]];
   if(src) pr[1].forEach(function(dn){ RFLAGS['vienna|'+dn] = src; });
@@ -169,9 +169,22 @@ var RFLAGS = __IMAGES__("flags/realms");
 // realms that flew another realm's flag: Soviet-zone Korea used the same flag as the U.S. zone (Max's choice), Finland
 // flew the Russian flag, Xinjiang the Republic of China's, the Cape was British after 1814
 [['ww2|Korea (Soviet zone)', 'ww2|Korea (U.S. zone)'], ['wwi|Grand Duchy of Finland', 'Russian Empire'],
- ['wwi|Xinjiang', 'wwi|China (Republic of China)'], ['wwi|Australian Papua', 'wwi|Australia'], ['ww2|Xinjiang', 'China'], ['vienna|Cape Colony', 'United Kingdom']].forEach(function(pr){
+ ['wwi|Xinjiang', 'wwi|China (Republic of China)'], ['wwi|Australian Papua', 'wwi|Australia'], ['ww2|Xinjiang', 'China'], ['vienna|Cape Colony', 'United Kingdom'],
+ // (2026-11-17) royal France in 1500, Venetian Cyprus in 1500, Muscat's plain red for Oman in 1945
+ ['discovery|France', 'Kingdom of France'], ['discovery|Cyprus', 'Republic of Venice'], ['ww2|Oman', 'Muscat']].forEach(function(pr){
   if(RFLAGS[pr[1]]) RFLAGS[pr[0]] = RFLAGS[pr[1]];
 });
+// Sweden-Norway in 1815: the union mark came only in 1844, so the Swedish flag
+if(FLAGS['Sweden']) RFLAGS['vienna|Sweden\u2013Norway'] = FLAGS['Sweden'];
+/* Flags checked 2026-11-17 (Max: "some flags need to be updated like the Soviet Union"): a plain key applies to every
+   period, so modern flags reached periods centuries before they existed. NOFLAG lists period+realm pairs that show no
+   flag (region tint instead) because the realm's flag is much later than the map (rule: more than ~100 years). */
+var NOFLAG = {};
+['early|Japan','early|Ireland','early|Cyprus','early|Papal States','early|Byzantine Empire','medieval|Byzantine Empire',
+ 'medieval|Cyprus','medieval|Norway','medieval|Sweden','medieval|Poland','medieval|Hungary','medieval|Denmark','medieval|Scotland',
+ 'medieval|\u0110\u1ea1i Vi\u1ec7t','discovery|\u0110\u1ea1i Vi\u1ec7t','medieval|Tu\u02bbi Tonga Empire','discovery|Tu\u02bbi Tonga Empire',
+ 'discovery|Taiwan','discovery|Madagascar','discovery|Joseon Korea','vienna|Joseon Korea','discovery|Ethiopian Empire',
+ 'discovery|Ottoman Empire','discovery|Poland-Lithuania','vienna|Qing China'].forEach(function(k){ NOFLAG[k] = 1; });
 var PARCHMENT_ERAS = ['bronze','classical','ancient','early','medieval'];
 /* ---------- Menu header: a small globe turning slowly (paused whenever the menu is hidden; still with reduced motion) ---------- */
 var globe = (function(){
@@ -316,7 +329,7 @@ var PAPER = __IMAGE__("img/paper.webp");
 document.documentElement.style.setProperty('--paper', 'url("'+PAPER+'")');
 var TERRITORY_FLAGS = {modern:['Greenland','Puerto Rico','New Caledonia','Falkland Is.','Fr. S. Antarctic Lands']};
 var SCATTERED = {'British Empire':1, 'French Empire':1, 'Belgian Empire':1, 'Portuguese Empire':1, 'Spanish Empire':1, 'Dutch Empire':1};
-function rflag(dn){ return RFLAGS[pack.id+'|'+dn] || RFLAGS[dn] || null; }
+function rflag(dn){ var k = pack.id+'|'+dn; return NOFLAG[k] ? null : (RFLAGS[k] || RFLAGS[dn] || null); }
 var ERAS = ['the ancient world','the Middle Ages','the early modern period','the 1800s','the 20th century or later'];
 var ROUNDS = 10;
 var LEVELS = [
