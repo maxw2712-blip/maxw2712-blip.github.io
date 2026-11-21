@@ -844,6 +844,9 @@ $('exploreMode').addEventListener('change', function(){
    realm's flag colour (dominant colour of its flag, or its region tint) to the new one's. The real map is hidden meanwhile
    and fades in at the end. Falls back to the cross-fade with reduced motion, without canvas (tests) or for
    Geography/Planets. */
+// ARCHIVED 2026-11-21 (Max: "archive it, we can work on it later"): MORPH_ON false sends every period switch to the
+// old cross-fade; the morph code below is kept as it was. Set it to true to bring the morph back.
+var MORPH_ON = false;
 var MORPH_MS = 1500, MORPH_K = window.innerWidth < 700 ? 48 : 64, MORPH_HIT_W = 480, MORPH_HIT_H = 250, morphRun = 0;
 var flagHue = {};
 // dominant colour of a flag image: the most common saturated colour, else the most common colour
@@ -974,7 +977,7 @@ function morphSnapshot(P){
 // with its flags and labels, 1-2 s) runs at the end behind the finished morph, which then fades into it
 function morphTo(v, draw){
   var old = $('map'), P2 = getPack(v);
-  var A = (!reduce && old && pack && pack.kind==='political' && P2.kind==='political' && !st.ally) ? morphSnapshot(pack) : null;
+  var A = (MORPH_ON && !reduce && old && pack && pack.kind==='political' && P2.kind==='political' && !st.ally) ? morphSnapshot(pack) : null;
   if(!A){ crossFade(draw); return; }
   var B = morphSnapshot(P2);
   // land shared by each old/new pair, counted on the id maps (edge pixels blend into other ids and are ignored)
@@ -1290,7 +1293,7 @@ function startExplore(){
   $('zoomBtns').hidden = false; $('exploreBar').hidden = false;
   $('exploreWorld').hidden = pack.kind!=='planet';
   if(pack.kind==='political') autoLabelAll();
-  if(pack.kind==='political') setTimeout(warmFlagHues, 1500);
+  if(pack.kind==='political' && MORPH_ON) setTimeout(warmFlagHues, 1500);
   drawMastery(); refreshMastery();
   if(pack.id!=='modern') allyOff(); else drawAlly();
   refreshExploreTools();
