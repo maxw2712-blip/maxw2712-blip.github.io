@@ -414,6 +414,11 @@ legend{padding:0;margin-bottom:6px;font-weight:600;font-size:.95rem}
 /* Explore period switch: the old map fades out over the new one */
 #app svg.xfade{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;opacity:1;transition:opacity .5s ease}
 #app svg.xfade.xfadeOut{opacity:0}
+/* period morph (2026-11-21): while the old realms bend into the new ones the real map is hidden; it fades in after */
+#app.morphing #map > g > :not(.sphere):not(.relief):not(.depth):not(.graticule):not(defs):not(.morphL){opacity:0}
+#app.morphIn #map > g > :not(.sphere):not(.relief):not(.depth):not(.graticule):not(defs):not(.morphL){transition:opacity .5s ease}
+.morphL path{stroke:var(--ink);stroke-opacity:.55;stroke-width:.8px;vector-effect:non-scaling-stroke;fill-opacity:.92;pointer-events:none}
+.morphL{transition:opacity .5s ease} .morphL.done{opacity:0}
 @media (prefers-reduced-motion: reduce){
   .plabelwrap{transition:none}
   .country.hit.goldPulse,.feat.hit.goldPulse,.shakeMap,.shakeCard{animation:none}

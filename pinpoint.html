@@ -430,6 +430,11 @@ legend{padding:0;margin-bottom:6px;font-weight:600;font-size:.95rem}
 /* Explore period switch: the old map fades out over the new one */
 #app svg.xfade{position:absolute;inset:0;width:100%;height:100%;display:block;pointer-events:none;opacity:1;transition:opacity .5s ease}
 #app svg.xfade.xfadeOut{opacity:0}
+/* period morph (2026-11-21): while the old realms bend into the new ones the real map is hidden; it fades in after */
+#app.morphing #map > g > :not(.sphere):not(.relief):not(.depth):not(.graticule):not(defs):not(.morphL){opacity:0}
+#app.morphIn #map > g > :not(.sphere):not(.relief):not(.depth):not(.graticule):not(defs):not(.morphL){transition:opacity .5s ease}
+.morphL path{stroke:var(--ink);stroke-opacity:.55;stroke-width:.8px;vector-effect:non-scaling-stroke;fill-opacity:.92;pointer-events:none}
+.morphL{transition:opacity .5s ease} .morphL.done{opacity:0}
 @media (prefers-reduced-motion: reduce){
   .plabelwrap{transition:none}
   .country.hit.goldPulse,.feat.hit.goldPulse,.shakeMap,.shakeCard{animation:none}
@@ -1621,8 +1626,217 @@ $('exploreHome').addEventListener('click', function(){ toSetup(); });
 $('exploreMode').addEventListener('change', function(){
   st.exploreMode = this.value;
   var v = this.value;
-  crossFade(function(){ setMode(v); startExplore(); });
+  morphTo(v, function(){ setMode(v); startExplore(); });
 });
+/* ---------- Explore: borders morph between periods (2026-11-21, Max chose "shape morph") ----------
+   Switching between two political maps in Explore (period slider or picker) bends the old realms into the new ones.
+   Pairing by shared land, measured on a small offscreen id map (each realm painted in its own colour): every new
+   realm grows out of the old realm that covered most of its land, and every old realm that is nobody's source melts into
+   the new realm that took most of its land, so empires split into successors and small states merge into big ones.
+   Each pair's largest piece is resampled to MORPH_K points and interpolated over MORPH_MS; its colour runs from the old
+   realm's flag colour (dominant colour of its flag, or its region tint) to the new one's. The real map is hidden meanwhile
+   and fades in at the end. Falls back to the cross-fade with reduced motion, without canvas (tests) or for
+   Geography/Planets. */
+var MORPH_MS = 1500, MORPH_K = window.innerWidth < 700 ? 48 : 64, MORPH_HIT_W = 480, MORPH_HIT_H = 250, morphRun = 0;
+var flagHue = {};
+// dominant colour of a flag image: the most common saturated colour, else the most common colour
+function flagHueOf(href, done){
+  if(flagHue[href] !== undefined){ if(done) done(); return; }
+  flagHue[href] = null;
+  var img = new Image();
+  img.onload = function(){
+    try{
+      var c = document.createElement('canvas'); c.width = 16; c.height = 12;
+      var x = c.getContext('2d'); x.drawImage(img, 0, 0, 16, 12);
+      var d = x.getImageData(0, 0, 16, 12).data, sat = {}, all = {}, bs = null, ba = null;
+      for(var i=0;i<d.length;i+=4){
+        if(d[i+3]<128) continue;
+        var r = d[i]>>5, g2 = d[i+1]>>5, b = d[i+2]>>5, k = r+','+g2+','+b;
+        var mx = Math.max(d[i],d[i+1],d[i+2]), mn = Math.min(d[i],d[i+1],d[i+2]);
+        all[k] = (all[k]||0)+1; if(ba===null || all[k]>all[ba]) ba = k;
+        if(mx-mn>60){ sat[k] = (sat[k]||0)+1; if(bs===null || sat[k]>sat[bs]) bs = k; }
+      }
+      var pick = bs || ba;
+      if(pick){ var p = pick.split(','); flagHue[href] = 'rgb('+(p[0]*32+16)+','+(p[1]*32+16)+','+(p[2]*32+16)+')'; }
+    }catch(e){}
+    if(done) done();
+  };
+  img.src = href;
+}
+// work out the flag colours of every period in the background, a few images at a time, once Explore opens
+var flagHueWarm = false;
+function warmFlagHues(){
+  if(flagHueWarm || !document.createElement('canvas').getContext) return;
+  flagHueWarm = true;
+  // first prepare every period's shapes for the morph, one period per tick (so the first jump to any period starts at
+  // once), then work out the flag colours a few images at a time
+  var ids = ERA_ORDER.slice(), hrefs = [];
+  (function nextPack(){
+    var id = ids.shift();
+    if(!id){ nextHue(); return; }
+    var P = getPack(id);
+    if(document.createElement('canvas').getContext('2d')) morphShapes(P);
+    Object.keys(P.items).forEach(function(n){ var h = realmFlagHref(P, n); if(h && hrefs.indexOf(h)<0) hrefs.push(h); });
+    setTimeout(nextPack, 40);
+  })();
+  function nextHue(){ var batch = hrefs.splice(0, 8); if(!batch.length) return; var left = batch.length;
+    batch.forEach(function(h){ flagHueOf(h, function(){ if(--left===0) setTimeout(nextHue, 30); }); }); }
+}
+function realmFlagHref(P, n){
+  var it = P.items[n]; if(!it) return null;
+  if(P.id==='modern') return FLAGS[n] || null;
+  var k = P.id+'|'+it.disp;
+  return NOFLAG[k] ? null : (RFLAGS[k] || RFLAGS[it.disp] || null);
+}
+function realmColor(P, n){
+  var h = realmFlagHref(P, n);
+  if(h && flagHue[h]) return flagHue[h];
+  var cls = P.items[n] && REGION_TINT[P.items[n].reg];
+  return (cls && getComputedStyle(app).getPropertyValue('--tint-'+cls).trim()) || '#9fb3bd';
+}
+// the projected outer ring of a realm's largest piece, as map-unit points (antimeridian cuts give several rings: keep the biggest)
+function projRing(f){
+  var rings = [], cur = null;
+  var rec = {moveTo:function(x,y){ cur = [[x,y]]; rings.push(cur); }, lineTo:function(x,y){ cur.push([x,y]); }, closePath:function(){}, beginPath:function(){}, arc:function(){}};
+  d3.geoPath(proj, rec)(bigPart(f));
+  var best = null, ba = 0;
+  rings.forEach(function(r){ var a = Math.abs(d3.polygonArea(r)); if(a>ba){ ba = a; best = r; } });
+  return best && best.length>2 ? best : null;
+}
+// K points evenly spaced along the ring, clockwise
+function resample(r, K){
+  if(d3.polygonArea(r) < 0) r = r.slice().reverse();
+  var L = [0], i;
+  for(i=1;i<=r.length;i++){ var a = r[i-1], b = r[i%r.length]; L.push(L[i-1] + Math.hypot(b[0]-a[0], b[1]-a[1])); }
+  var tot = L[L.length-1] || 1, out = [], j = 0;
+  for(i=0;i<K;i++){
+    var s = tot*i/K;
+    while(j<r.length-1 && L[j+1]<s) j++;
+    var a2 = r[j], b2 = r[(j+1)%r.length], seg = (L[j+1]-L[j]) || 1, t = (s-L[j])/seg;
+    out.push([a2[0]+(b2[0]-a2[0])*t, a2[1]+(b2[1]-a2[1])*t]);
+  }
+  return out;
+}
+// rotate B so its points line up with A's (smallest total travel)
+function alignRing(A, B){
+  var K = A.length, best = 0, bd = Infinity;
+  for(var s=0;s<K;s++){
+    var d = 0;
+    for(var i=0;i<K;i+=4){ var p = A[i], q = B[(i+s)%K]; d += (p[0]-q[0])*(p[0]-q[0]) + (p[1]-q[1])*(p[1]-q[1]); if(d>=bd) break; }
+    if(d<bd){ bd = d; best = s; }
+  }
+  return B.slice(best).concat(B.slice(0, best));
+}
+// one realm per named shape group, with its id-map colour, outline and centroid; shapes never change, so they are worked
+// out once per period (morphShapes) and only the colours are looked up again each time
+var morphCache = {};
+function morphShapes(P){
+  if(morphCache[P.id]) return morphCache[P.id];
+  var cv = document.createElement('canvas'), ctx = cv.getContext && cv.getContext('2d');
+  if(!ctx) return null;
+  cv.width = MORPH_HIT_W; cv.height = MORPH_HIT_H;
+  ctx.scale(MORPH_HIT_W/W, MORPH_HIT_H/H);
+  var gp = d3.geoPath(proj, ctx), realms = [], idx = {}, big = {};
+  P.features.forEach(function(f){
+    var n = f.properties.name; if(!n || !P.items[n]) return;
+    var a = d3.geoArea(f);
+    if(!big[n] || a>big[n].a) big[n] = {f:f, a:a};
+    if(idx[n]===undefined){ idx[n] = realms.length; realms.push({name:n}); }
+    var id = idx[n]+1;
+    ctx.fillStyle = 'rgb('+(id>>8)+','+(id&255)+',0)';
+    ctx.beginPath(); gp(f); ctx.fill();
+  });
+  realms.forEach(function(R){
+    var ring = projRing(big[R.name].f);
+    R.ring = ring ? resample(ring, MORPH_K) : null;
+    R.cen = ring ? d3.polygonCentroid(ring) : proj(d3.geoCentroid(big[R.name].f));
+    R.area = big[R.name].a;
+  });
+  // the micro-states' circles change size with the zoom, so the modern map is never cached
+  var out = {realms:realms, ids:ctx.getImageData(0, 0, MORPH_HIT_W, MORPH_HIT_H).data};
+  if(P.id!=='modern') morphCache[P.id] = out;
+  return out;
+}
+function morphSnapshot(P){
+  var S = morphShapes(P);
+  if(!S) return null;
+  S.realms.forEach(function(R){ R.color = realmColor(P, R.name); });
+  return S;
+}
+// the new period's shapes come straight from its data, so the morph starts at once; the slow part (drawing the new map
+// with its flags and labels, 1-2 s) runs at the end behind the finished morph, which then fades into it
+function morphTo(v, draw){
+  var old = $('map'), P2 = getPack(v);
+  var A = (!reduce && old && pack && pack.kind==='political' && P2.kind==='political' && !st.ally) ? morphSnapshot(pack) : null;
+  if(!A){ crossFade(draw); return; }
+  var B = morphSnapshot(P2);
+  // land shared by each old/new pair, counted on the id maps (edge pixels blend into other ids and are ignored)
+  var ov = {}, nA = A.realms.length, nB = B.realms.length;
+  for(var i=0;i<A.ids.length;i+=4){
+    var ia = A.ids[i]*256 + A.ids[i+1], ib = B.ids[i]*256 + B.ids[i+1];
+    if(A.ids[i+2] || B.ids[i+2] || !ia || !ib || ia>nA || ib>nB) continue;
+    var key = (ia-1)*4096 + (ib-1); ov[key] = (ov[key]||0)+1;
+  }
+  var bestOld = {}, bestNew = {};
+  Object.keys(ov).forEach(function(k){
+    var c = ov[k], ia = Math.floor(k/4096), ib = k%4096;
+    if(!bestOld[ib] || c>bestOld[ib].c) bestOld[ib] = {i:ia, c:c};
+    if(!bestNew[ia] || c>bestNew[ia].c) bestNew[ia] = {i:ib, c:c};
+  });
+  var pairs = [], used = {};
+  B.realms.forEach(function(R, ib){
+    if(!R.ring) return;
+    var src = bestOld[ib] ? A.realms[bestOld[ib].i] : null;
+    if(src) used[bestOld[ib].i] = 1;
+    var from = src && src.ring ? alignRing(R.ring, src.ring) : R.ring.map(function(){ return R.cen; });
+    pairs.push({a:from, b:R.ring, ca:src ? src.color : R.color, cb:R.color, area:R.area, grow:!src});
+  });
+  A.realms.forEach(function(R, ia){
+    if(used[ia] || !R.ring) return;
+    var dst = bestNew[ia] ? B.realms[bestNew[ia].i] : null;
+    var to = dst && dst.ring ? alignRing(R.ring, dst.ring) : R.ring.map(function(){ return R.cen; });
+    pairs.push({a:R.ring, b:to, ca:R.color, cb:dst ? dst.color : R.color, area:R.area, fade:!dst});
+  });
+  pairs.sort(function(p, q){ return q.area-p.area; });
+  // a newer move of the slider cancels a morph still running (its map was never drawn, so it starts from the same one)
+  var run = ++morphRun;
+  g.selectAll('g.morphL').remove();
+  app.classList.add('morphing');
+  function layerAt(e0){
+    var layer = g.append('g').attr('class','morphL');
+    var els = pairs.map(function(){ return layer.append('path').node(); });
+    function set(e){
+      for(var j=0;j<pairs.length;j++){
+        var p = pairs[j], a = p.a, b = p.b, d = 'M';
+        for(var k=0;k<a.length;k++){
+          if(k) d += 'L';
+          d += (a[k][0]+(b[k][0]-a[k][0])*e).toFixed(1)+','+(a[k][1]+(b[k][1]-a[k][1])*e).toFixed(1);
+        }
+        els[j].setAttribute('d', d+'Z');
+        els[j].setAttribute('fill', d3.interpolateRgb(p.ca, p.cb)(e));
+        els[j].style.fillOpacity = p.fade ? String(.92*(1-e)) : p.grow ? String(.92*e) : '';
+      }
+    }
+    set(e0);
+    return {layer:layer, set:set};
+  }
+  var L = layerAt(0), t0 = performance.now(), ease = d3.easeCubicInOut;
+  (function frame(now){
+    if(run!==morphRun){ L.layer.remove(); return; }
+    // left Explore (Home) mid-morph: stop without drawing, so it does not pull you back in
+    if(st.phase!=='explore'){ L.layer.remove(); app.classList.remove('morphing'); return; }
+    var t = Math.min(1, (now-t0)/MORPH_MS);
+    L.set(ease(t));
+    if(t<1){ requestAnimationFrame(frame); return; }
+    // draw the real map (this wipes the morph layer), lay the finished morph back on top, then fade one into the other
+    draw();
+    var L2 = layerAt(1);
+    requestAnimationFrame(function(){ requestAnimationFrame(function(){
+      app.classList.add('morphIn'); app.classList.remove('morphing'); L2.layer.classed('done', true);
+      setTimeout(function(){ L2.layer.remove(); if(run===morphRun) app.classList.remove('morphIn'); }, 560);
+    }); });
+  })(t0);
+}
 /* Cross-fade the map: a snapshot of the old map (with its theme frozen inline) sits on top and fades out while the new
    map is drawn underneath. */
 function crossFade(draw){
@@ -1869,6 +2083,7 @@ function startExplore(){
   $('zoomBtns').hidden = false; $('exploreBar').hidden = false;
   $('exploreWorld').hidden = pack.kind!=='planet';
   if(pack.kind==='political') autoLabelAll();
+  if(pack.kind==='political') setTimeout(warmFlagHues, 1500);
   drawMastery(); refreshMastery();
   if(pack.id!=='modern') allyOff(); else drawAlly();
   refreshExploreTools();
@@ -2376,7 +2591,7 @@ $('eraRange').addEventListener('input', function(){
   eraT = setTimeout(function(){
     if(st.exploreMode===v) return;
     st.exploreMode = v;
-    crossFade(function(){ setMode(v); startExplore(); });
+    morphTo(v, function(){ setMode(v); startExplore(); });
   }, 280);
 });
 function refreshExploreTools(){
