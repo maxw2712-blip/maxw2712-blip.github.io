@@ -309,6 +309,9 @@ legend{padding:0;margin-bottom:6px;font-weight:600;font-size:.95rem}
 .country.flagged{fill-opacity:0}
 /* micro-states: a dot at least 5 screen px wide with a clear outline; the tap target is a larger invisible circle */
 .country.micro{stroke:var(--ink);stroke-opacity:.85;stroke-width:1.2px;vector-effect:non-scaling-stroke}
+/* Easy/Medium games never ask them: a faint outline that takes no taps (2026-11-21) */
+#app.microSoft .country.micro{stroke-opacity:.18;stroke-width:.8px;pointer-events:none}
+#app.microSoft.playing .microHit circle{pointer-events:none}
 .microHit circle{fill:transparent;cursor:pointer;pointer-events:all}
 #app.exploring .microHit circle,#app.playing .microHit circle{pointer-events:all}
 .country.hit.flagged,.country.reveal.flagged{fill-opacity:0;stroke:var(--gold);stroke-opacity:1;stroke-width:2.6px}

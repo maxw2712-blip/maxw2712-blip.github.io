@@ -1123,7 +1123,7 @@ function toSetup(){
   stopTimer(); clearTimers(); hideToast(); clearLabels(); st.devPick = false; DEV_PANELS.forEach(function(id){ var e = $(id); if(e) e.hidden = true; }); devPausedMs = null;
   $('flagImg').hidden = true; app.classList.remove('flagq');
   $('end').hidden = true; $('setup').hidden = false;
-  app.classList.remove('playing'); app.classList.remove('tint'); app.classList.remove('noterrain'); app.classList.remove('exploring'); app.classList.remove('mastering'); st.phase='setup';
+  app.classList.remove('playing'); app.classList.remove('tint'); app.classList.remove('noterrain'); app.classList.remove('exploring'); app.classList.remove('mastering'); app.classList.remove('microSoft'); st.phase='setup';
   $('exploreBar').hidden = true;
   $('hudTop').hidden = true; $('hudBottom').hidden = true; $('zoomBtns').hidden = true;
   paths.classed('hit miss reveal', false);
@@ -1289,6 +1289,10 @@ function startGame(qsOverride){
   var practice = Array.isArray(qsOverride) && !st.daily;
   st.practice = practice;
   st.qs = Array.isArray(qsOverride) ? qsOverride : buildQuestions();
+  // micro-states are never asked on Easy/Medium: their dots fade to a faint outline and stop taking taps, unless this
+  // round asks one anyway (a practice round of misses from Hard). History & Diplomacy keeps them (Malta, Singapore...)
+  app.classList.toggle('microSoft', (pack.id==='modern' || !!pack.isFlags) && !MICRO_CAP[effLevel().id]
+    && !st.qs.some(function(q){ return MICRO_SET[q.name]; }));
   st.i=0; st.score=0; st.log=[]; st.phase='play'; st.saved=null;
   clearLabels();
   $('exploreBar').hidden = true; app.classList.remove('exploring'); app.classList.remove('mastering');
@@ -1324,6 +1328,7 @@ function startExplore(){
   st.phase = 'explore'; st.practice = false;
   paths.classed('hit miss reveal', false); marks.selectAll('*').remove();
   applyRegion();
+  app.classList.remove('microSoft');
   app.classList.add('playing'); app.classList.add('exploring'); app.classList.remove('tint'); app.classList.remove('noterrain');
   $('setup').hidden = true; $('end').hidden = true;
   $('hudTop').hidden = true; $('hudBottom').hidden = true;
