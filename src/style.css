@@ -48,6 +48,10 @@ button{font:inherit;color:inherit;cursor:pointer}
 .feat.pl{fill:none;stroke:none}
 .feat.pl.hit,.feat.pl.reveal{fill:var(--gold)!important;fill-opacity:.35!important;stroke:var(--gold)!important;stroke-opacity:1!important;stroke-width:2px!important}
 #app.noterrain .relief,#app.noterrain .depth{display:none}
+/* sharp terrain tiles when zoomed (2026-11-21): fade in as they load; night maps dim the relief with opacity, which
+   would double over the tiles, so they keep the base image */
+.rtile{transition:opacity .3s ease;pointer-events:none}
+#app.era-night .rtiles{display:none}
 /* ocean depth (2026-11-17): darker blue over deep water; follows the terrain (hidden with it), toned per theme below */
 .depth{pointer-events:none}
 #app.noterrain .land{fill:var(--land)}

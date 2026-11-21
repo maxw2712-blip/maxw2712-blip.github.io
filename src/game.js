@@ -76,6 +76,13 @@ var RELIEF = __IMAGE__("img/relief.webp");
 // ocean depth shading (2026-11-17): Natural Earth 10m bathymetry as navy with alpha by depth, same frame as RELIEF
 // (scripts/make_depth.mjs); drawn over the terrain on Earth maps, toned per theme in style.css
 var DEPTH = __IMAGE__("img/depth.webp");
+/* Sharp terrain when zoomed (2026-11-21): the inlined relief has 3 px per map unit and blurs past about 2x zoom. Tiles
+   of the same Natural Earth relief at 8 and 16 px per unit (scripts/make_relief_tiles.js) are separate files next to the
+   page (relief/<S>/<col>_<row>.webp, not inlined: 552 tiles, 4.6 MB) and load only for the part of the map on screen once the zoom
+   needs them (reliefTiles, run after every zoom). RELIEF_TILES lists the tiles that exist (none outside the globe).
+   Without them (offline before they were cached, or the claude.ai dev copy) the map simply keeps the inlined relief. */
+var RELIEF_TILES = __JSON__("data/RELIEF_TILES.json");
+var TILE_PX = 512, TILE_PAD = 2;
 var PIMG = __IMAGES__("img/planets");
 /* Planets mode is archived (Max, 2026-11-13): build.py leaves the planet textures out unless run with --planets, and
    with no textures the Planets tab, its Explore option and its credit line are removed. All planet code and data stay. */
@@ -371,10 +378,10 @@ var zoom = d3.zoom().scaleExtent([1,60]).translateExtent([[0,0],[W,H]]).clickDis
     microResize();
     if(labels) labels.selectAll('g.plabel').attr('transform', function(d){ var k = e.transform.k, nom = d.nom || 1, s = d.fit ? (d.out ? Math.max(Math.min(nom/k, d.fit), (d.sp || 0.55)/k) : Math.min(nom/k, d.fit)) : 1/k; return 'translate('+d.x+','+d.y+') scale('+s+')'; });
   })
-  .on('end', function(){ microFlags(); if(labelRecs.length) layoutLabels(); });
+  .on('end', function(){ microFlags(); reliefTiles(); if(labelRecs.length) layoutLabels(); });
 // label sizes depend on how large the map is drawn, so lay them out again after a resize or rotation
 var resizeT = null;
-window.addEventListener('resize', function(){ clearTimeout(resizeT); resizeT = setTimeout(function(){ microResize(); microFlags(); if(labelRecs.length) layoutLabels(); }, 150); });
+window.addEventListener('resize', function(){ clearTimeout(resizeT); resizeT = setTimeout(function(){ microResize(); microFlags(); reliefTiles(); if(labelRecs.length) layoutLabels(); }, 150); });
 svg.call(zoom).on('dblclick.zoom', null);
 svg.on('click.pick', function(ev){ physPick(ev); });
 
@@ -406,6 +413,35 @@ function moveTo(t, dur){
   svg.transition().duration(dur===undefined?DUR:dur).call(zoom.transform, t);
 }
 
+function reliefTiles(){
+  var grp = g.select('g.rtiles');
+  if(grp.empty() || !pack || pack.kind==='planet') return;
+  var tr = d3.zoomTransform(svg.node()), kp = microScale();
+  // screen pixels per map unit decides the level: the inlined relief (3 px per unit) is fine below 3.6
+  var S = kp > 9 ? 16 : kp > 3.6 ? 8 : 0;
+  if(!S){ grp.selectAll('image').remove(); return; }
+  var x0 = -tr.x/tr.k, y0 = -tr.y/tr.k, x1 = (W-tr.x)/tr.k, y1 = (H-tr.y)/tr.k, want = {};
+  [8, 16].forEach(function(L){
+    if(L>S) return;
+    // the coarser level stays underneath while the finer one loads, so there is never a blurry gap
+    var have = RELIEF_TILES[L] || {}, c0 = Math.floor(x0*L/TILE_PX), c1 = Math.floor(x1*L/TILE_PX), r0 = Math.floor(y0*L/TILE_PX), r1 = Math.floor(y1*L/TILE_PX);
+    for(var r=r0; r<=r1; r++) for(var c=c0; c<=c1; c++){ var k = c+'_'+r; if(have[k]) want[L+'/'+k] = [L, c, r]; }
+  });
+  grp.selectAll('image').each(function(){ if(!want[this.getAttribute('data-t')]) this.remove(); });
+  Object.keys(want).forEach(function(key){
+    if(!grp.select('image[data-t="'+key+'"]').empty()) return;
+    var t = want[key], L = t[0];
+    var im = grp.append('image').attr('class','relief rtile').attr('data-t', key).attr('data-l', L)
+      .attr('x', (t[1]*TILE_PX - TILE_PAD)/L).attr('y', (t[2]*TILE_PX - TILE_PAD)/L)
+      .attr('width', (TILE_PX + 2*TILE_PAD)/L).attr('height', (TILE_PX + 2*TILE_PAD)/L).attr('preserveAspectRatio','none')
+      .style('opacity', 0)
+      .on('load', function(){ this.style.opacity = ''; })
+      .on('error', function(){ this.remove(); });
+    im.attr('href', 'relief/'+key+'.webp');
+  });
+  // finer tiles on top
+  grp.selectAll('image[data-l="16"]').raise();
+}
 /* Micro-states: keep each dot at least MICRO_PX screen pixels wide at any zoom (true size when zoomed in far enough). */
 function microScale(){
   var k = d3.zoomTransform(svg.node()).k, sr = svg.node().getBoundingClientRect(), px = Math.min(sr.width/W, sr.height/H) || 1;
@@ -607,6 +643,7 @@ function drawPack(){
   defs.append('clipPath').attr('id','sphereClip').append('path').attr('d', path({type:'Sphere'}));
   g.append('image').attr('class','relief').attr('href', pack.kind==='planet' ? PIMG[curBody] : RELIEF).attr('x',0).attr('y',0).attr('width',W).attr('height',H)
     .attr('preserveAspectRatio','none').attr('clip-path','url(#sphereClip)');
+  if(pack.kind!=='planet') g.append('g').attr('class','rtiles').attr('clip-path','url(#sphereClip)');
   if(pack.kind!=='planet') g.append('image').attr('class','depth').attr('href', DEPTH).attr('x',0).attr('y',0).attr('width',W).attr('height',H)
     .attr('preserveAspectRatio','none').attr('clip-path','url(#sphereClip)');
   g.append('path').attr('class','graticule').attr('d', path(d3.geoGraticule10()));
