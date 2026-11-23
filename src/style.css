@@ -580,3 +580,15 @@ legend{padding:0;margin-bottom:6px;font-weight:600;font-size:.95rem}
 .eraBar[hidden],.allyBar[hidden]{display:none}
 @media (max-width:620px){ .allyNote{flex-basis:100%;font-size:.72rem} .allyMore{display:none} }
 .missFill{fill-opacity:.55;stroke:none;pointer-events:none}
+
+/* Welcome for first-time visitors (2026-11-23, Max chose "welcome for newcomers"): only the globe, the title, a one-line
+   pitch, a big Play (an Easy round on the modern map) and "See all modes"; everything else on the menu card waits */
+#app.welcoming #setup .sheet > :not(.brand):not(#welcome){display:none!important}
+.welcome{display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px;padding:18px 4px 8px}
+.welcome[hidden]{display:none}
+.wLede{margin:0;color:var(--muted);font-size:1.05rem;line-height:1.45;max-width:30ch}
+.wPlay{font-size:1.25rem;padding:16px 56px;border-radius:999px;min-width:220px}
+.wAll{background:none;border:0;color:var(--muted);font:inherit;font-size:.95rem;text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:6px 10px}
+.wAll:hover{color:var(--ink)}
+#app.welcoming #setup .brand{justify-content:center}
+@media (max-width:620px){ #app.welcoming #setup .sheet{height:auto} }

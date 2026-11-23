@@ -1285,6 +1285,7 @@ function timeUp(){ if(st.phase==='play' && !st.locked) reveal(null, true); }
 
 /* ---------- Game ---------- */
 function startGame(qsOverride){
+  if(app.classList.contains('welcoming')) setWelcome(false);
   clearTimers();
   st.dating = false; app.classList.remove('dating'); $('dateCtl').hidden = true;
   st.daily = st.dailyStart || null; st.dailyStart = null;
@@ -3123,6 +3124,31 @@ function autoNext(){
   })();
 }
 
+/* Welcome for first-time visitors (2026-11-23): nobody who has saved anything in Pinpoint (scores, mastery, daily) sees
+   it. Play starts an Easy round on the modern map; "See all modes" shows the normal menu. Either marks them as seen. */
+function isNewcomer(){
+  try{
+    if(localStorage.getItem('pinpoint:seen')) return false;
+    for(var i=0; i<localStorage.length; i++){
+      var k = localStorage.key(i);
+      if(k && k.indexOf('pinpoint:')===0 && k!=='pinpoint:cfg') return false;
+    }
+    return true;
+  }catch(e){ return false; }
+}
+function setWelcome(on){ app.classList.toggle('welcoming', on); $('welcome').hidden = !on; }
+function markSeen(){ try{ localStorage.setItem('pinpoint:seen', '1'); }catch(e){} }
+var NEWCOMER = isNewcomer();
+$('welPlay').addEventListener('click', function(){
+  markSeen(); setWelcome(false);
+  $('tabMap').click();
+  var mb = document.querySelector('.seg[data-key="mode"] button[data-v="modern"]'); if(mb) mb.click();
+  var lb = document.querySelector('#ticks button[data-i="0"]'); if(lb) lb.click();
+  $('start').click();
+});
+$('welAll').addEventListener('click', function(){ markSeen(); setWelcome(false); });
+
 setMode('modern');
+if(NEWCOMER) setWelcome(true);
 if(globe) globe.start();
 })();

@@ -15,6 +15,21 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Pinpoint: a geography game</title>
+<meta name="description" content="Find countries, flags and empires across 3,500 years of history. 11 historical maps, a daily challenge and history quizzes. Free, no sign-up.">
+<!-- link previews (2026-11-23): og.jpg is made by scripts/make_og.mjs from the game itself (Explore, 1914 map) -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Pinpoint">
+<meta property="og:title" content="Pinpoint: a geography and history game">
+<meta property="og:description" content="Find countries, flags and empires across 3,500 years of history. 11 historical maps, a daily challenge and history quizzes. Free, no sign-up.">
+<meta property="og:url" content="https://maxw2712-blip.github.io/">
+<meta property="og:image" content="https://maxw2712-blip.github.io/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Pinpoint: a world map from 1914 with every country's flag and name">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Pinpoint: a geography and history game">
+<meta name="twitter:description" content="Find countries, flags and empires across 3,500 years of history. Free, no sign-up.">
+<meta name="twitter:image" content="https://maxw2712-blip.github.io/og.jpg">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#0d2a3a">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
@@ -136,6 +151,11 @@
       <div class="brand"><canvas id="globe" aria-hidden="true"></canvas><h1 id="t1">Pinpoint</h1></div>
       <p class="otd" id="otd" hidden><b class="otdTag" id="otdTag">On this day</b> <span id="otdText"></span></p>
       <button type="button" class="gear" id="settingsBtn" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+      <div class="welcome" id="welcome" hidden>
+        <p class="wLede">Find countries on the map in ten quick rounds. When you are ready, explore 3,500 years of history.</p>
+        <button type="button" class="btn primary wPlay" id="welPlay">Play</button>
+        <button type="button" class="wAll" id="welAll">See all modes</button>
+      </div>
       <p class="lede" id="lede">Click the right place on the map, and the fewer tries you need, the more points you score. Games run ten rounds.</p>
       <div class="daily" id="daily"><svg class="dIcon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="m9 15 2 2 4-4"/></svg><div class="dText"><b id="dailyTitle">Daily</b> <span class="dStreak" id="dailyStreak" hidden></span><span class="dSub" id="dailySub"></span></div><button type="button" class="btn primary" id="dailyBtn">Play</button></div>
       <div class="tabs" role="tablist" aria-label="Game type">

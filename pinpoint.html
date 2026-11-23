@@ -15,6 +15,21 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Pinpoint: a geography game</title>
+<meta name="description" content="Find countries, flags and empires across 3,500 years of history. 11 historical maps, a daily challenge and history quizzes. Free, no sign-up.">
+<!-- link previews (2026-11-23): og.jpg is made by scripts/make_og.mjs from the game itself (Explore, 1914 map) -->
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="Pinpoint">
+<meta property="og:title" content="Pinpoint: a geography and history game">
+<meta property="og:description" content="Find countries, flags and empires across 3,500 years of history. 11 historical maps, a daily challenge and history quizzes. Free, no sign-up.">
+<meta property="og:url" content="https://maxw2712-blip.github.io/">
+<meta property="og:image" content="https://maxw2712-blip.github.io/og.jpg">
+<meta property="og:image:width" content="1200">
+<meta property="og:image:height" content="630">
+<meta property="og:image:alt" content="Pinpoint: a world map from 1914 with every country's flag and name">
+<meta name="twitter:card" content="summary_large_image">
+<meta name="twitter:title" content="Pinpoint: a geography and history game">
+<meta name="twitter:description" content="Find countries, flags and empires across 3,500 years of history. Free, no sign-up.">
+<meta name="twitter:image" content="https://maxw2712-blip.github.io/og.jpg">
 <link rel="manifest" href="manifest.webmanifest">
 <meta name="theme-color" content="#0d2a3a">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
@@ -596,6 +611,18 @@ legend{padding:0;margin-bottom:6px;font-weight:600;font-size:.95rem}
 .eraBar[hidden],.allyBar[hidden]{display:none}
 @media (max-width:620px){ .allyNote{flex-basis:100%;font-size:.72rem} .allyMore{display:none} }
 .missFill{fill-opacity:.55;stroke:none;pointer-events:none}
+
+/* Welcome for first-time visitors (2026-11-23, Max chose "welcome for newcomers"): only the globe, the title, a one-line
+   pitch, a big Play (an Easy round on the modern map) and "See all modes"; everything else on the menu card waits */
+#app.welcoming #setup .sheet > :not(.brand):not(#welcome){display:none!important}
+.welcome{display:flex;flex-direction:column;align-items:center;text-align:center;gap:14px;padding:18px 4px 8px}
+.welcome[hidden]{display:none}
+.wLede{margin:0;color:var(--muted);font-size:1.05rem;line-height:1.45;max-width:30ch}
+.wPlay{font-size:1.25rem;padding:16px 56px;border-radius:999px;min-width:220px}
+.wAll{background:none;border:0;color:var(--muted);font:inherit;font-size:.95rem;text-decoration:underline;text-underline-offset:3px;cursor:pointer;padding:6px 10px}
+.wAll:hover{color:var(--ink)}
+#app.welcoming #setup .brand{justify-content:center}
+@media (max-width:620px){ #app.welcoming #setup .sheet{height:auto} }
 </style>
 </head>
 <body>
@@ -698,6 +725,11 @@ legend{padding:0;margin-bottom:6px;font-weight:600;font-size:.95rem}
       <div class="brand"><canvas id="globe" aria-hidden="true"></canvas><h1 id="t1">Pinpoint</h1></div>
       <p class="otd" id="otd" hidden><b class="otdTag" id="otdTag">On this day</b> <span id="otdText"></span></p>
       <button type="button" class="gear" id="settingsBtn" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
+      <div class="welcome" id="welcome" hidden>
+        <p class="wLede">Find countries on the map in ten quick rounds. When you are ready, explore 3,500 years of history.</p>
+        <button type="button" class="btn primary wPlay" id="welPlay">Play</button>
+        <button type="button" class="wAll" id="welAll">See all modes</button>
+      </div>
       <p class="lede" id="lede">Click the right place on the map, and the fewer tries you need, the more points you score. Games run ten rounds.</p>
       <div class="daily" id="daily"><svg class="dIcon" viewBox="0 0 24 24" aria-hidden="true"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5"/><path d="M3.5 10h17M8 3v4M16 3v4"/><path d="m9 15 2 2 4-4"/></svg><div class="dText"><b id="dailyTitle">Daily</b> <span class="dStreak" id="dailyStreak" hidden></span><span class="dSub" id="dailySub"></span></div><button type="button" class="btn primary" id="dailyBtn">Play</button></div>
       <div class="tabs" role="tablist" aria-label="Game type">
@@ -2085,6 +2117,7 @@ function timeUp(){ if(st.phase==='play' && !st.locked) reveal(null, true); }
 
 /* ---------- Game ---------- */
 function startGame(qsOverride){
+  if(app.classList.contains('welcoming')) setWelcome(false);
   clearTimers();
   st.dating = false; app.classList.remove('dating'); $('dateCtl').hidden = true;
   st.daily = st.dailyStart || null; st.dailyStart = null;
@@ -3809,7 +3842,32 @@ function autoNext(){
   })();
 }
 
+/* Welcome for first-time visitors (2026-11-23): nobody who has saved anything in Pinpoint (scores, mastery, daily) sees
+   it. Play starts an Easy round on the modern map; "See all modes" shows the normal menu. Either marks them as seen. */
+function isNewcomer(){
+  try{
+    if(localStorage.getItem('pinpoint:seen')) return false;
+    for(var i=0; i<localStorage.length; i++){
+      var k = localStorage.key(i);
+      if(k && k.indexOf('pinpoint:')===0 && k!=='pinpoint:cfg') return false;
+    }
+    return true;
+  }catch(e){ return false; }
+}
+function setWelcome(on){ app.classList.toggle('welcoming', on); $('welcome').hidden = !on; }
+function markSeen(){ try{ localStorage.setItem('pinpoint:seen', '1'); }catch(e){} }
+var NEWCOMER = isNewcomer();
+$('welPlay').addEventListener('click', function(){
+  markSeen(); setWelcome(false);
+  $('tabMap').click();
+  var mb = document.querySelector('.seg[data-key="mode"] button[data-v="modern"]'); if(mb) mb.click();
+  var lb = document.querySelector('#ticks button[data-i="0"]'); if(lb) lb.click();
+  $('start').click();
+});
+$('welAll').addEventListener('click', function(){ markSeen(); setWelcome(false); });
+
 setMode('modern');
+if(NEWCOMER) setWelcome(true);
 if(globe) globe.start();
 })();
 </script>
