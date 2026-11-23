@@ -2,7 +2,7 @@
 """Read the infobox flag/coat/symbol fields of Wikipedia articles. Usage: infobox_flags.py TITLES.py OUT.json
 TITLES.py defines T = {key: article title}. 20 titles per request, 6 s apart."""
 import json, re, sys, time, urllib.parse, urllib.request, importlib.util
-UA = 'PinpointFlagSearch/1.0 (educational geography game; https://github.com/maxw2712-blip/pinpoint)'
+UA = 'PinpointFlagSearch/1.0 (educational geography game; https://github.com/maxw2712-blip/maxw2712-blip.github.io)'
 spec = importlib.util.spec_from_file_location('t', sys.argv[1]); m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)
 T = m.T; out = {}
 FIELDS = r'(image_flag\d?|flag_type\d?|flag_caption|image_coat|coa_type|symbol_type|image_symbol|symbol|flag|image_banner|flag_alt|coat_alt|symbol_caption|coa_caption)'

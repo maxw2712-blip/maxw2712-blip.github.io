@@ -3,7 +3,7 @@
 Usage: python3 commons_search.py NOFLAG.json OUT.json   (NOFLAG = {period: [[mapName, displayName, cap, region]]})
 6 s between requests, backs off on HTTP 429. Saves after every realm, skips realms already in OUT."""
 import json, os, re, sys, time, urllib.parse, urllib.request
-UA = 'PinpointFlagSearch/1.0 (educational geography game; https://github.com/maxw2712-blip/pinpoint)'
+UA = 'PinpointFlagSearch/1.0 (educational geography game; https://github.com/maxw2712-blip/maxw2712-blip.github.io)'
 src, outp = sys.argv[1], sys.argv[2]
 out = json.load(open(outp)) if os.path.exists(outp) else {}
 def api(params):

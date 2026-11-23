@@ -4,7 +4,7 @@ LIST has one article title per line. One file per title (slashes replaced); skip
 requests, backs off on HTTP 429 (Wikimedia rate-limits this machine)."""
 import json, os, sys, time, urllib.parse, urllib.request
 lst, out = sys.argv[1], sys.argv[2]; os.makedirs(out, exist_ok=True)
-UA = 'PinpointFactCheck/1.0 (educational geography game; https://github.com/maxw2712-blip/pinpoint)'
+UA = 'PinpointFactCheck/1.0 (educational geography game; https://github.com/maxw2712-blip/maxw2712-blip.github.io)'
 for title in [l.strip() for l in open(lst, encoding='utf-8') if l.strip()]:
     path = os.path.join(out, title.replace('/', '_') + '.txt')
     if os.path.exists(path): continue

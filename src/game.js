@@ -2148,7 +2148,7 @@ function modeLabel(id){ var o = document.querySelector('#exploreMode option[valu
 function dailySquares(log){ return log.map(function(p){ return p>=3 ? '\ud83d\udfe9' : p>0 ? '\ud83d\udfe7' : '\ud83d\udfe5'; }); }
 function dailyShareData(rec, D){
   var sc = rec.log.reduce(function(a, b){ return a+b; }, 0), sq = dailySquares(rec.log), k = curStreak(D);
-  var text = 'Pinpoint Daily #'+rec.n+' \u00b7 '+modeLabel(rec.mode)+'\n'+sc+'/30'+(k ? '  \ud83d\udd25 '+k : '')+'\n'+sq.slice(0,5).join('')+'\n'+sq.slice(5).join('')+'\nhttps://maxw2712-blip.github.io/pinpoint/';
+  var text = 'Pinpoint Daily #'+rec.n+' \u00b7 '+modeLabel(rec.mode)+'\n'+sc+'/30'+(k ? '  \ud83d\udd25 '+k : '')+'\n'+sq.slice(0,5).join('')+'\n'+sq.slice(5).join('')+'\nhttps://maxw2712-blip.github.io/';
   return {text:text, label:'Daily #'+rec.n+' \u00b7 '+modeLabel(rec.mode), score:sc, max:30, pts:rec.log, recap:false, extra:k ? k+'-day streak' : ''};
 }
 function startDaily(){
@@ -2780,7 +2780,7 @@ function setupLabel(){
 function shareText(){
   var max = st.qs.length*3;
   var squares = st.log.map(function(e){ return e.pts>=3 ? '🟩' : e.pts>0 ? '🟧' : '🟥'; }).join('');
-  return 'Pinpoint · '+setupLabel()+'\n'+st.score+'/'+max+'  '+squares+'\nhttps://maxw2712-blip.github.io/pinpoint/';
+  return 'Pinpoint · '+setupLabel()+'\n'+st.score+'/'+max+'  '+squares+'\nhttps://maxw2712-blip.github.io/';
 }
 /* The summary card: 1200x630 PNG with the setup, score, one square per question and the recap map. */
 function gameShareData(){
@@ -2805,7 +2805,7 @@ function shareImage(data){
       var x = 56+(i%5)*58, y = 350+Math.floor(i/5)*58;
       c.beginPath(); if(c.roundRect) c.roundRect(x, y, 46, 46, 8); else c.rect(x, y, 46, 46); c.fill();
     });
-    c.fillStyle = '#9bb6c2'; c.font = '500 22px Figtree, system-ui, sans-serif'; c.fillText('maxw2712-blip.github.io/pinpoint', 56, Hc-44);
+    c.fillStyle = '#9bb6c2'; c.font = '500 22px Figtree, system-ui, sans-serif'; c.fillText('maxw2712-blip.github.io', 56, Hc-44);
     var done = function(){ cv.toBlob(function(b){ resolve(b); }, 'image/png'); };
     var rm = $('recapMap');
     if(!data.recap || $('recapWrap').hidden || !rm.getAttribute('viewBox')){ done(); return; }

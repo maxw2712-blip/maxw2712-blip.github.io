@@ -4,7 +4,7 @@ Saves one file per date in the given folder; skips dates already saved. Wikimedi
 6 s between requests and backs off on HTTP 429. Usage: python3 fetch_dates.py OUTDIR"""
 import json, os, sys, time, urllib.parse, urllib.request, datetime
 out = sys.argv[1]; os.makedirs(out, exist_ok=True)
-UA = 'PinpointFactCheck/1.0 (educational geography game; https://github.com/maxw2712-blip/pinpoint)'
+UA = 'PinpointFactCheck/1.0 (educational geography game; https://github.com/maxw2712-blip/maxw2712-blip.github.io)'
 days = [datetime.date(2024, 1, 1) + datetime.timedelta(d) for d in range(366)]
 for d in days:
     key = d.strftime('%m-%d'); path = os.path.join(out, key + '.txt')
