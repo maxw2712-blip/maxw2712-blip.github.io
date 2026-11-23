@@ -186,11 +186,11 @@ if(FLAGS['Sweden']) RFLAGS['vienna|Sweden\u2013Norway'] = FLAGS['Sweden'];
 /* Flags checked 2026-11-17 (Max: "some flags need to be updated like the Soviet Union"): a plain key applies to every
    period, so modern flags reached periods centuries before they existed. NOFLAG lists period+realm pairs that show no
    flag (region tint instead) because the realm's flag is much later than the map (rule: more than ~100 years). */
-// (2026-11-23) Hungary, Norway, Poland and Cyprus in 1200 and Poland-Lithuania and the Ottomans in 1500 now have their own
+// (2026-11-23) Hungary, Norway, Poland, Cyprus, Denmark and Scotland in 1200 and Poland-Lithuania and the Ottomans in 1500 now have their own
 // period arms or banners (period keys), so they are no longer blocked here
 var NOFLAG = {};
 ['early|Japan','early|Ireland','early|Cyprus','early|Papal States','early|Byzantine Empire','medieval|Byzantine Empire',
- 'medieval|Sweden','medieval|Denmark','medieval|Scotland',
+ 'medieval|Sweden',
  'medieval|\u0110\u1ea1i Vi\u1ec7t','discovery|\u0110\u1ea1i Vi\u1ec7t','medieval|Tu\u02bbi Tonga Empire','discovery|Tu\u02bbi Tonga Empire',
  'discovery|Taiwan','discovery|Madagascar','discovery|Joseon Korea','vienna|Joseon Korea','discovery|Ethiopian Empire',
  'vienna|Qing China'].forEach(function(k){ NOFLAG[k] = 1; });
