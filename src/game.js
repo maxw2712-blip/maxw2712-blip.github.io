@@ -3247,9 +3247,9 @@ function openBadges(){
     var d = document.createElement('div'); d.className = 'bd '+(b.done ? 'on' : 'off');
     var i = document.createElement('span'); i.className = 'bdI'; i.textContent = b.icon;
     var t = document.createElement('div'), nm = document.createElement('b'), ds = document.createElement('small');
-    nm.textContent = b.name; ds.textContent = b.done ? b.desc+(b.date ? ' · '+b.date : '') : b.desc+' · '+b.have+'/'+b.need;
+    nm.textContent = b.name; ds.textContent = b.done ? b.desc+(b.date ? ' · '+b.date : '') : b.desc+(b.need>1 ? ' · '+b.have+'/'+b.need : '');
     t.appendChild(nm); t.appendChild(ds);
-    if(!b.done){ var pr = document.createElement('div'); pr.className = 'bdP'; var fi = document.createElement('i'); fi.style.width = Math.round(100*b.have/b.need)+'%'; pr.appendChild(fi); t.appendChild(pr); }
+    if(!b.done && b.need>1){ var pr = document.createElement('div'); pr.className = 'bdP'; var fi = document.createElement('i'); fi.style.width = Math.round(100*b.have/b.need)+'%'; pr.appendChild(fi); t.appendChild(pr); }
     d.appendChild(i); d.appendChild(t); grid.appendChild(d);
   });
   $('badgesPanel').hidden = false;
