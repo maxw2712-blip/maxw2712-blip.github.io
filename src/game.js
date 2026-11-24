@@ -1345,6 +1345,7 @@ function startExplore(){
   $('zoomBtns').hidden = false; $('exploreBar').hidden = false;
   $('exploreWorld').hidden = pack.kind!=='planet';
   if(pack.kind==='political') autoLabelAll();
+  if(pack.kind==='political' && ERA_ORDER.indexOf(pack.id)>=0){ bumpStat(function(S){ S.explored[pack.id] = 1; }); checkBadges(); }
   if(pack.kind==='political' && MORPH_ON) setTimeout(warmFlagHues, 1500);
   drawMastery(); refreshMastery();
   if(pack.id!=='modern') allyOff(); else drawAlly();
@@ -1440,6 +1441,7 @@ function triviaPick(i){
     var pts = LEVELS[st.level].pts[st.tries];
     stopTimer(); st.locked = true; st.revealed = true; st.score += pts;
     st.log.push({q:q, pts:pts}); if(st.daily) dailyProgress(pts);
+    bumpStat(function(S){ S.trivia++; });
     btns[i].classList.add('good');
     btns.forEach(function(b){ b.disabled = true; });
     $('score').textContent = st.score; $('tFact').textContent = T.f;
@@ -2917,6 +2919,10 @@ function endGame(){
   else if(prev===null || st.score>prev){ setBest(st.score); msg = prev===null ? 'First score saved for this setup.' : 'New best for this setup. Previous: '+prev+'.'; }
   else { msg = 'Your best for this setup: '+prev+' points.'; }
   $('best2').textContent = msg;
+  bumpStat(function(S){ S.games++; });
+  var fresh = checkBadges();
+  $('bdNew').hidden = !fresh.length;
+  $('bdNew').textContent = fresh.length ? '\ud83c\udfc5 New badge'+(fresh.length>1 ? 's' : '')+': '+fresh.map(function(b){ return b.name; }).join(', ') : '';
   var missedN = st.log.filter(function(e){ return e.pts===0; }).length;
   $('practice').hidden = missedN===0 || !!st.dating;
   $('practice').textContent = 'Practice '+missedN+(missedN===1 ? ' miss' : ' misses');
@@ -3176,6 +3182,80 @@ function autoNext(){
   })();
 }
 
+/* ---------- Badges (2026-11-24, Max chose the full set) ----------
+   29 badges worked out from what the game already saves (daily record, mastery, best scores) plus pinpoint:stats
+   {games, trivia, explored:{period:1}} kept from now on. Earned ones are remembered in pinpoint:badges {id: date}, so a
+   badge stays even if, say, a mastery score later drops. Checked at the end of every game and on opening Explore; new
+   ones are named on the end screen. Menu: trophy button next to the gear opens the Badges page (locked ones show progress). */
+var SKEY = 'pinpoint:stats', BKEY = 'pinpoint:badges';
+function loadStats(){ var S; try{ S = JSON.parse(localStorage.getItem(SKEY) || '{}') || {}; }catch(e){ S = {}; } S.games = S.games || 0; S.trivia = S.trivia || 0; S.explored = S.explored || {}; return S; }
+function bumpStat(fn){ var S = loadStats(); fn(S); try{ localStorage.setItem(SKEY, JSON.stringify(S)); }catch(e){} }
+var REG_CODE = {E:'Europe', S:'Asia', A:'Africa', M:'Americas', O:'Oceania'};
+function badgeList(){
+  var D = loadDaily(), S = loadStats(), days = Object.keys(D.days).map(function(k){ return D.days[k]; }).filter(function(r){ return r.done; });
+  var sum = function(a){ return a.reduce(function(x, y){ return x+y; }, 0); };
+  var bests = [];
+  try{ for(var i=0; i<localStorage.length; i++){ var k = localStorage.key(i); if(k && k.indexOf('pinpoint:best:')===0) bests.push([k, +localStorage.getItem(k)]); } }catch(e){}
+  var bestWhere = function(f){ return bests.filter(function(b){ return f(b[0]); }).reduce(function(m, b){ return Math.max(m, b[1]); }, 0); };
+  var MS = MASTERY;
+  try{ MS = JSON.parse(localStorage.getItem(MKEY) || 'null') || MASTERY; }catch(e){}
+  var mastered = function(period, names){
+    var P = MS[period] || {};
+    return names.filter(function(n){ var r = P[n]; return r && r[1].length && sum(r[1])/(3*r[1].length) >= 0.8; }).length;
+  };
+  var L = [];
+  var add = function(id, icon, name, desc, have, need){ L.push({id:id, icon:icon, name:name, desc:desc, have:Math.min(have, need), need:need, done:have>=need}); };
+  add('streak3', '🔥', 'On a roll', 'A 3-day daily streak', D.best, 3);
+  add('streak7', '🔥', 'Week-long streak', 'A 7-day daily streak', D.best, 7);
+  add('streak30', '🔥', 'Month of maps', 'A 30-day daily streak', D.best, 30);
+  add('daily1', '🧭', 'First journey', 'Finish a daily challenge', days.length, 1);
+  add('daily10', '🧭', 'Seasoned traveller', 'Finish 10 daily challenges', days.length, 10);
+  add('dailyPerfect', '🧭', 'Flawless journey', 'Score 30/30 in a daily', days.some(function(r){ return sum(r.log)>=30; }) ? 1 : 0, 1);
+  add('game1', '🎯', 'First steps', 'Finish a game', S.games, 1);
+  add('perfect', '🎯', 'Perfect round', 'Score 30/30 in any game', bestWhere(function(){ return true; })>=30 ? 1 : 0, 1);
+  add('flags', '🚩', 'Flag expert', 'Score 30/30 in a Flags game', bestWhere(function(k){ return k.indexOf('pinpoint:best:flags:')===0; })>=30 ? 1 : 0, 1);
+  add('dating', '⏳', 'Time traveller', 'Score 25 or more in Date this map', bestWhere(function(k){ return k.indexOf('pinpoint:best:dating:')===0; }), 25);
+  add('trivia20', '📜', 'History buff', 'Answer 20 history questions right', S.trivia, 20);
+  add('trivia100', '📜', 'Historian', 'Answer 100 history questions right', S.trivia, 100);
+  add('explorer', '🗺️', 'Explorer', 'Open all 11 maps in Explore', ERA_ORDER.filter(function(p){ return S.explored[p]; }).length, ERA_ORDER.length);
+  ERA_ORDER.forEach(function(p){
+    var names = p==='modern' ? RAW.map(function(r){ return r[0]; }).concat(MICRO.map(function(r){ return r[0]; })) : (HIST[p] || []).map(function(r){ return r[0]; });
+    add('map:'+p, '🏛️', 'Master of '+(p==='modern' ? 'today\u2019s world' : ((modeLabel(p).match(/\(([^)]*)\)/) || [0, modeLabel(p)])[1])), 'Master half the '+(p==='modern' ? 'countries' : 'realms')+' of '+modeLabel(p)+' (80%+ each)', mastered(p, names), Math.ceil(names.length/2));
+  });
+  ['E','S','A','M','O'].forEach(function(c){
+    var names = RAW.filter(function(r){ return r[2]===c; }).map(function(r){ return r[0]; });
+    add('cont:'+c, '🌍', 'Know '+REG_CODE[c], '80%+ on every country of '+REG_CODE[c]+' (modern map)', mastered('modern', names), names.length);
+  });
+  var got = {}; try{ got = JSON.parse(localStorage.getItem(BKEY) || '{}') || {}; }catch(e){}
+  L.forEach(function(b){ if(got[b.id]){ b.done = true; b.have = b.need; b.date = got[b.id]; } });
+  return L;
+}
+// newly earned badges since the last check, remembered so they are announced once
+function checkBadges(){
+  var L = badgeList(), got = {}, fresh = [];
+  try{ got = JSON.parse(localStorage.getItem(BKEY) || '{}') || {}; }catch(e){}
+  L.forEach(function(b){ if(b.done && !got[b.id]){ got[b.id] = dayKey(); fresh.push(b); } });
+  if(fresh.length){ try{ localStorage.setItem(BKEY, JSON.stringify(got)); }catch(e){} }
+  return fresh;
+}
+function openBadges(){
+  checkBadges();
+  var L = badgeList(), n = L.filter(function(b){ return b.done; }).length, grid = $('bdGrid');
+  $('bdSum').textContent = n+' of '+L.length+' earned. Progress is saved in this browser.';
+  grid.innerHTML = '';
+  L.slice().sort(function(a, b){ return (b.done-a.done) || (b.have/b.need - a.have/a.need); }).forEach(function(b){
+    var d = document.createElement('div'); d.className = 'bd '+(b.done ? 'on' : 'off');
+    var i = document.createElement('span'); i.className = 'bdI'; i.textContent = b.icon;
+    var t = document.createElement('div'), nm = document.createElement('b'), ds = document.createElement('small');
+    nm.textContent = b.name; ds.textContent = b.done ? b.desc+(b.date ? ' · '+b.date : '') : b.desc+' · '+b.have+'/'+b.need;
+    t.appendChild(nm); t.appendChild(ds);
+    if(!b.done){ var pr = document.createElement('div'); pr.className = 'bdP'; var fi = document.createElement('i'); fi.style.width = Math.round(100*b.have/b.need)+'%'; pr.appendChild(fi); t.appendChild(pr); }
+    d.appendChild(i); d.appendChild(t); grid.appendChild(d);
+  });
+  $('badgesPanel').hidden = false;
+}
+$('badgesBtn').addEventListener('click', openBadges);
+$('bdDone').addEventListener('click', function(){ $('badgesPanel').hidden = true; });
 /* Welcome for first-time visitors (2026-11-23): nobody who has saved anything in Pinpoint (scores, mastery, daily) sees
    it. Play starts an Easy round on the modern map; "See all modes" shows the normal menu. Either marks them as seen. */
 function isNewcomer(){

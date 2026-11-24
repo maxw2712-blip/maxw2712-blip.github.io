@@ -623,6 +623,29 @@ legend{padding:0;margin-bottom:6px;font-weight:600;font-size:.95rem}
 .wAll:hover{color:var(--ink)}
 #app.welcoming #setup .brand{justify-content:center}
 @media (max-width:620px){ #app.welcoming #setup .sheet{height:auto} }
+
+/* Badges (2026-11-24): trophy button beside the gear on the menu, a panel of badge tiles, new ones named on the end screen */
+#badgesBtn{right:54px}
+#badgesBtn svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+#badgesPanel{z-index:8}
+.bdSum{margin:6px 0 12px;color:var(--muted)}
+.bdGrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:8px;max-height:min(60vh,520px);overflow:auto;padding:2px}
+.bd{display:flex;gap:10px;align-items:flex-start;padding:10px;border:1px solid var(--line);border-radius:12px;background:var(--panel)}
+.bd .bdI{font-size:1.5rem;line-height:1}
+.bd b{display:block;font-size:.92rem}
+.bd small{display:block;color:var(--muted);font-size:.78rem;line-height:1.3;margin-top:2px}
+.bd .bdP{margin-top:6px;height:4px;border-radius:2px;background:var(--line);overflow:hidden}
+.bd .bdP i{display:block;height:100%;background:var(--gold,#e8b13a)}
+.bd.off{opacity:.62}
+.bd.off .bdI{filter:grayscale(1)}
+.bd.on{border-color:var(--gold,#e8b13a);box-shadow:0 0 0 1px var(--gold,#e8b13a) inset}
+.bdNew{margin:8px 0 0;font-weight:600}
+.bdNew[hidden]{display:none}
+@media (max-width:620px){
+  #badgesBtn{right:44px}
+  #badgesPanel .sheet{height:auto;max-height:100%;overflow:auto}
+  .bdGrid{grid-template-columns:1fr 1fr;max-height:none}
+}
 </style>
 </head>
 <body>
@@ -724,6 +747,7 @@ legend{padding:0;margin-bottom:6px;font-weight:600;font-size:.95rem}
     <div class="card sheet">
       <div class="brand"><canvas id="globe" aria-hidden="true"></canvas><h1 id="t1">Pinpoint</h1></div>
       <p class="otd" id="otd" hidden><b class="otdTag" id="otdTag">On this day</b> <span id="otdText"></span></p>
+      <button type="button" class="gear" id="badgesBtn" aria-label="Badges" title="Badges"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8v5a4 4 0 0 1-8 0z"/><path d="M8 6H5a3 3 0 0 0 3 4M16 6h3a3 3 0 0 1-3 4"/><path d="M12 13v4M9 20h6M10 17h4"/></svg></button>
       <button type="button" class="gear" id="settingsBtn" aria-label="Settings" title="Settings"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg></button>
       <div class="welcome" id="welcome" hidden>
         <p class="wLede">Find countries on the map in ten quick rounds. When you are ready, explore 3,500 years of history.</p>
@@ -799,11 +823,20 @@ legend{padding:0;margin-bottom:6px;font-weight:600;font-size:.95rem}
         <button type="button" class="btn" id="shareBtn">Share result</button>
       </div>
       <p class="best" id="best2"></p>
+      <p class="bdNew" id="bdNew" hidden></p>
       <p class="shareNote" id="shareNote" aria-live="polite"></p>
     </div>
   </section>
 
 
+  <section class="overlay" id="badgesPanel" aria-labelledby="bdTitle" hidden>
+    <div class="card sheet">
+      <h2 id="bdTitle">Badges</h2>
+      <p class="bdSum" id="bdSum"></p>
+      <div class="bdGrid" id="bdGrid"></div>
+      <div class="actions"><button type="button" class="btn primary" id="bdDone">Done</button></div>
+    </div>
+  </section>
   <section class="overlay" id="settingsPanel" aria-labelledby="stTitle" hidden>
     <div class="card sheet">
       <h2 id="stTitle">Settings</h2>
@@ -2177,6 +2210,7 @@ function startExplore(){
   $('zoomBtns').hidden = false; $('exploreBar').hidden = false;
   $('exploreWorld').hidden = pack.kind!=='planet';
   if(pack.kind==='political') autoLabelAll();
+  if(pack.kind==='political' && ERA_ORDER.indexOf(pack.id)>=0){ bumpStat(function(S){ S.explored[pack.id] = 1; }); checkBadges(); }
   if(pack.kind==='political' && MORPH_ON) setTimeout(warmFlagHues, 1500);
   drawMastery(); refreshMastery();
   if(pack.id!=='modern') allyOff(); else drawAlly();
@@ -2272,6 +2306,7 @@ function triviaPick(i){
     var pts = LEVELS[st.level].pts[st.tries];
     stopTimer(); st.locked = true; st.revealed = true; st.score += pts;
     st.log.push({q:q, pts:pts}); if(st.daily) dailyProgress(pts);
+    bumpStat(function(S){ S.trivia++; });
     btns[i].classList.add('good');
     btns.forEach(function(b){ b.disabled = true; });
     $('score').textContent = st.score; $('tFact').textContent = T.f;
@@ -3749,6 +3784,10 @@ function endGame(){
   else if(prev===null || st.score>prev){ setBest(st.score); msg = prev===null ? 'First score saved for this setup.' : 'New best for this setup. Previous: '+prev+'.'; }
   else { msg = 'Your best for this setup: '+prev+' points.'; }
   $('best2').textContent = msg;
+  bumpStat(function(S){ S.games++; });
+  var fresh = checkBadges();
+  $('bdNew').hidden = !fresh.length;
+  $('bdNew').textContent = fresh.length ? '\ud83c\udfc5 New badge'+(fresh.length>1 ? 's' : '')+': '+fresh.map(function(b){ return b.name; }).join(', ') : '';
   var missedN = st.log.filter(function(e){ return e.pts===0; }).length;
   $('practice').hidden = missedN===0 || !!st.dating;
   $('practice').textContent = 'Practice '+missedN+(missedN===1 ? ' miss' : ' misses');
@@ -3894,6 +3933,80 @@ function autoNext(){
   })();
 }
 
+/* ---------- Badges (2026-11-24, Max chose the full set) ----------
+   29 badges worked out from what the game already saves (daily record, mastery, best scores) plus pinpoint:stats
+   {games, trivia, explored:{period:1}} kept from now on. Earned ones are remembered in pinpoint:badges {id: date}, so a
+   badge stays even if, say, a mastery score later drops. Checked at the end of every game and on opening Explore; new
+   ones are named on the end screen. Menu: trophy button next to the gear opens the Badges page (locked ones show progress). */
+var SKEY = 'pinpoint:stats', BKEY = 'pinpoint:badges';
+function loadStats(){ var S; try{ S = JSON.parse(localStorage.getItem(SKEY) || '{}') || {}; }catch(e){ S = {}; } S.games = S.games || 0; S.trivia = S.trivia || 0; S.explored = S.explored || {}; return S; }
+function bumpStat(fn){ var S = loadStats(); fn(S); try{ localStorage.setItem(SKEY, JSON.stringify(S)); }catch(e){} }
+var REG_CODE = {E:'Europe', S:'Asia', A:'Africa', M:'Americas', O:'Oceania'};
+function badgeList(){
+  var D = loadDaily(), S = loadStats(), days = Object.keys(D.days).map(function(k){ return D.days[k]; }).filter(function(r){ return r.done; });
+  var sum = function(a){ return a.reduce(function(x, y){ return x+y; }, 0); };
+  var bests = [];
+  try{ for(var i=0; i<localStorage.length; i++){ var k = localStorage.key(i); if(k && k.indexOf('pinpoint:best:')===0) bests.push([k, +localStorage.getItem(k)]); } }catch(e){}
+  var bestWhere = function(f){ return bests.filter(function(b){ return f(b[0]); }).reduce(function(m, b){ return Math.max(m, b[1]); }, 0); };
+  var MS = MASTERY;
+  try{ MS = JSON.parse(localStorage.getItem(MKEY) || 'null') || MASTERY; }catch(e){}
+  var mastered = function(period, names){
+    var P = MS[period] || {};
+    return names.filter(function(n){ var r = P[n]; return r && r[1].length && sum(r[1])/(3*r[1].length) >= 0.8; }).length;
+  };
+  var L = [];
+  var add = function(id, icon, name, desc, have, need){ L.push({id:id, icon:icon, name:name, desc:desc, have:Math.min(have, need), need:need, done:have>=need}); };
+  add('streak3', '🔥', 'On a roll', 'A 3-day daily streak', D.best, 3);
+  add('streak7', '🔥', 'Week-long streak', 'A 7-day daily streak', D.best, 7);
+  add('streak30', '🔥', 'Month of maps', 'A 30-day daily streak', D.best, 30);
+  add('daily1', '🧭', 'First journey', 'Finish a daily challenge', days.length, 1);
+  add('daily10', '🧭', 'Seasoned traveller', 'Finish 10 daily challenges', days.length, 10);
+  add('dailyPerfect', '🧭', 'Flawless journey', 'Score 30/30 in a daily', days.some(function(r){ return sum(r.log)>=30; }) ? 1 : 0, 1);
+  add('game1', '🎯', 'First steps', 'Finish a game', S.games, 1);
+  add('perfect', '🎯', 'Perfect round', 'Score 30/30 in any game', bestWhere(function(){ return true; })>=30 ? 1 : 0, 1);
+  add('flags', '🚩', 'Flag expert', 'Score 30/30 in a Flags game', bestWhere(function(k){ return k.indexOf('pinpoint:best:flags:')===0; })>=30 ? 1 : 0, 1);
+  add('dating', '⏳', 'Time traveller', 'Score 25 or more in Date this map', bestWhere(function(k){ return k.indexOf('pinpoint:best:dating:')===0; }), 25);
+  add('trivia20', '📜', 'History buff', 'Answer 20 history questions right', S.trivia, 20);
+  add('trivia100', '📜', 'Historian', 'Answer 100 history questions right', S.trivia, 100);
+  add('explorer', '🗺️', 'Explorer', 'Open all 11 maps in Explore', ERA_ORDER.filter(function(p){ return S.explored[p]; }).length, ERA_ORDER.length);
+  ERA_ORDER.forEach(function(p){
+    var names = p==='modern' ? RAW.map(function(r){ return r[0]; }).concat(MICRO.map(function(r){ return r[0]; })) : (HIST[p] || []).map(function(r){ return r[0]; });
+    add('map:'+p, '🏛️', 'Master of '+(p==='modern' ? 'today\u2019s world' : ((modeLabel(p).match(/\(([^)]*)\)/) || [0, modeLabel(p)])[1])), 'Master half the '+(p==='modern' ? 'countries' : 'realms')+' of '+modeLabel(p)+' (80%+ each)', mastered(p, names), Math.ceil(names.length/2));
+  });
+  ['E','S','A','M','O'].forEach(function(c){
+    var names = RAW.filter(function(r){ return r[2]===c; }).map(function(r){ return r[0]; });
+    add('cont:'+c, '🌍', 'Know '+REG_CODE[c], '80%+ on every country of '+REG_CODE[c]+' (modern map)', mastered('modern', names), names.length);
+  });
+  var got = {}; try{ got = JSON.parse(localStorage.getItem(BKEY) || '{}') || {}; }catch(e){}
+  L.forEach(function(b){ if(got[b.id]){ b.done = true; b.have = b.need; b.date = got[b.id]; } });
+  return L;
+}
+// newly earned badges since the last check, remembered so they are announced once
+function checkBadges(){
+  var L = badgeList(), got = {}, fresh = [];
+  try{ got = JSON.parse(localStorage.getItem(BKEY) || '{}') || {}; }catch(e){}
+  L.forEach(function(b){ if(b.done && !got[b.id]){ got[b.id] = dayKey(); fresh.push(b); } });
+  if(fresh.length){ try{ localStorage.setItem(BKEY, JSON.stringify(got)); }catch(e){} }
+  return fresh;
+}
+function openBadges(){
+  checkBadges();
+  var L = badgeList(), n = L.filter(function(b){ return b.done; }).length, grid = $('bdGrid');
+  $('bdSum').textContent = n+' of '+L.length+' earned. Progress is saved in this browser.';
+  grid.innerHTML = '';
+  L.slice().sort(function(a, b){ return (b.done-a.done) || (b.have/b.need - a.have/a.need); }).forEach(function(b){
+    var d = document.createElement('div'); d.className = 'bd '+(b.done ? 'on' : 'off');
+    var i = document.createElement('span'); i.className = 'bdI'; i.textContent = b.icon;
+    var t = document.createElement('div'), nm = document.createElement('b'), ds = document.createElement('small');
+    nm.textContent = b.name; ds.textContent = b.done ? b.desc+(b.date ? ' · '+b.date : '') : b.desc+' · '+b.have+'/'+b.need;
+    t.appendChild(nm); t.appendChild(ds);
+    if(!b.done){ var pr = document.createElement('div'); pr.className = 'bdP'; var fi = document.createElement('i'); fi.style.width = Math.round(100*b.have/b.need)+'%'; pr.appendChild(fi); t.appendChild(pr); }
+    d.appendChild(i); d.appendChild(t); grid.appendChild(d);
+  });
+  $('badgesPanel').hidden = false;
+}
+$('badgesBtn').addEventListener('click', openBadges);
+$('bdDone').addEventListener('click', function(){ $('badgesPanel').hidden = true; });
 /* Welcome for first-time visitors (2026-11-23): nobody who has saved anything in Pinpoint (scores, mastery, daily) sees
    it. Play starts an Easy round on the modern map; "See all modes" shows the normal menu. Either marks them as seen. */
 function isNewcomer(){
